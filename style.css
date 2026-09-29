@@ -1,0 +1,289 @@
+body {
+  margin: 0;
+  background: #fff;
+}
+
+/* Tab bar */
+/* Sliding pill motion, adapted from transitions.dev "Tabs sliding" */
+:root {
+  --tabs-dur: 250ms;
+  --tabs-ease: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Matrix dot loader, adapted from transitions.dev "Matrix dot loader" */
+:root {
+  --matrix-cycle: 1200ms;
+  --matrix-base: #d9d9d9;
+  --matrix-active: #000;
+  --matrix-ease: ease-in-out;
+  --matrix-dot: 4px;
+  --matrix-gap: 3px;
+}
+
+.page-loader {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  background: #fff;
+  transition: opacity 300ms ease, visibility 300ms;
+}
+
+.page-loader[hidden] {
+  display: none;
+}
+
+.page-loader.is-done {
+  opacity: 0;
+  visibility: hidden;
+}
+
+.t-matrix {
+  display: grid;
+  grid-template-columns: repeat(4, var(--matrix-dot));
+  grid-auto-rows: var(--matrix-dot);
+  gap: var(--matrix-gap);
+}
+
+.t-matrix i {
+  display: block;
+  background: var(--matrix-base);
+  animation: t-matrix-pulse var(--matrix-cycle) var(--matrix-ease) infinite;
+  animation-delay: calc(var(--d, 0) * 1ms);
+}
+
+/* Hole positions (rounded variants) render nothing */
+.t-matrix i.is-gap {
+  visibility: hidden;
+  animation: none;
+}
+
+@keyframes t-matrix-pulse {
+  0%, 45%, 100% { background-color: var(--matrix-base); }
+  15%           { background-color: var(--matrix-active); }
+}
+
+/* Views */
+.view[hidden] {
+  display: none;
+}
+
+/* Projects: bento grid. Two columns, so two halves always share a row
+   and match the width of one full card. */
+:root {
+  --bento-max-width: 800px;
+  --bento-gap: 16px;
+  --bento-radius: 24px;
+}
+
+.bento {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--bento-gap);
+  max-width: var(--bento-max-width);
+  margin-inline: auto;
+  padding: 24px 16px calc(120px + env(safe-area-inset-bottom, 0px));
+}
+
+.bento-card {
+  border-radius: var(--bento-radius);
+  background: #f2f2f2;
+}
+
+.bento-card--full {
+  grid-column: span 2;
+  aspect-ratio: 5 / 2;
+}
+
+.bento-card--half {
+  grid-column: span 1;
+  aspect-ratio: 5 / 4;
+}
+
+/* Progressive blur behind the tab bar: stacked backdrop blurs,
+   each masked to a band so blur strength ramps up toward the bottom. */
+.progressive-blur {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1;
+  height: calc(180px + env(safe-area-inset-bottom, 0px));
+  pointer-events: none;
+}
+
+.progressive-blur > div {
+  position: absolute;
+  inset: 0;
+}
+
+.progressive-blur > div:nth-child(1) {
+  backdrop-filter: blur(0.25px);
+  -webkit-backdrop-filter: blur(0.25px);
+  mask-image: linear-gradient(to bottom, transparent 0%, #000 16%, #000 33%, transparent 50%);
+}
+
+.progressive-blur > div:nth-child(2) {
+  backdrop-filter: blur(0.5px);
+  -webkit-backdrop-filter: blur(0.5px);
+  mask-image: linear-gradient(to bottom, transparent 16%, #000 33%, #000 50%, transparent 66%);
+}
+
+.progressive-blur > div:nth-child(3) {
+  backdrop-filter: blur(1px);
+  -webkit-backdrop-filter: blur(1px);
+  mask-image: linear-gradient(to bottom, transparent 33%, #000 50%, #000 66%, transparent 83%);
+}
+
+.progressive-blur > div:nth-child(4) {
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  mask-image: linear-gradient(to bottom, transparent 50%, #000 66%, #000 83%, transparent 100%);
+}
+
+.progressive-blur > div:nth-child(5) {
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  mask-image: linear-gradient(to bottom, transparent 66%, #000 83%, #000 100%);
+}
+
+.progressive-blur > div:nth-child(6) {
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  mask-image: linear-gradient(to bottom, transparent 83%, #000 100%);
+}
+
+/* Tab bar entrance, adapted from transitions.dev "Success check" (motion only) */
+:root {
+  --check-opacity-dur: 700ms;
+  --check-bob-dur: 700ms;
+  --check-y-amount: 40px;
+  --check-blur-dur: 700ms;
+  --check-blur-from: 10px;
+  --check-ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --check-ease-opacity: cubic-bezier(0.22, 1, 0.36, 1);
+  --check-ease-bob: cubic-bezier(0.34, 1.35, 0.64, 1);
+}
+
+.tab-bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: calc(24px + env(safe-area-inset-bottom, 0px));
+  z-index: 2;
+  width: fit-content;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  margin-inline: auto;
+  display: flex;
+  gap: 4px;
+  padding: 8px;
+  background: #000;
+  border-radius: 999px;
+  box-shadow: 0 8px 24px rgb(0 0 0 / 0.2);
+}
+
+.tab-bar__item {
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 56px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: rgb(255 255 255 / 0.6);
+  cursor: pointer;
+  position: relative;
+  z-index: 1;
+  transition: color var(--tabs-dur) var(--tabs-ease);
+}
+
+.tab-bar__item svg {
+  width: 28px;
+  height: 28px;
+}
+
+/* Bold when unselected, filled when selected */
+.tab-bar__item .icon-fill,
+.tab-bar__item[aria-current="page"] .icon-bold {
+  display: none;
+}
+
+.tab-bar__item[aria-current="page"] .icon-fill {
+  display: block;
+}
+
+.tab-bar__item:hover,
+.tab-bar__item[aria-current="page"] {
+  color: #fff;
+}
+
+.tab-bar[data-state="out"] {
+  opacity: 0;
+}
+
+.tab-bar[data-state="in"] {
+  will-change: translate, opacity, filter;
+  animation:
+    t-check-fade   var(--check-opacity-dur) var(--check-ease-opacity) forwards,
+    t-check-blur   var(--check-blur-dur)    var(--check-ease-out)     forwards,
+    t-check-bob    var(--check-bob-dur)     var(--check-ease-bob)     forwards;
+}
+
+@keyframes t-check-fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes t-check-blur {
+  from { filter: blur(var(--check-blur-from)); }
+  to   { filter: blur(0); }
+}
+@keyframes t-check-bob {
+  from { translate: 0 var(--check-y-amount); }
+  to   { translate: 0 0; }
+}
+
+/* Selected background: JS writes the active tab's position and size */
+.tab-bar__pill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 0;
+  height: 0;
+  border-radius: 999px;
+  background: rgb(255 255 255 / 0.18);
+  transform: translate(0, 0);
+  transition:
+    transform var(--tabs-dur) var(--tabs-ease),
+    width var(--tabs-dur) var(--tabs-ease);
+  will-change: transform, width;
+  pointer-events: none;
+}
+
+.tab-bar__item:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: -2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tab-bar__pill,
+  .tab-bar__item {
+    transition: none !important;
+  }
+
+  .t-matrix i {
+    animation: none !important;
+  }
+
+  .tab-bar[data-state] {
+    animation: none !important;
+    opacity: 1;
+  }
+}
+
+@media (max-width: 400px) {
+  .tab-bar__item {
+    width: 52px;
+    height: 48px;
+  }
+}
