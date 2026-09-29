@@ -126,6 +126,48 @@ window.addEventListener('hashchange', () => setActiveTab(true));
 window.addEventListener('resize', () => movePill(activeTab(), false));
 requestAnimationFrame(() => setActiveTab(false));
 
+// Avatar group hover, adapted from transitions.dev.
+// Lifts the hovered avatar and its neighbours with a falloff. The timing
+// function is set inline before the variables change, so hover-in eases
+// cleanly and the return on mouseleave springs.
+document.querySelectorAll('.t-avatar-group').forEach((group) => {
+  const avatars = [...group.querySelectorAll('.t-avatar')];
+  const rootStyle = getComputedStyle(document.documentElement);
+  const num = (name, fallback) => {
+    const value = parseFloat(rootStyle.getPropertyValue(name));
+    return Number.isFinite(value) ? value : fallback;
+  };
+  const ease = (name, fallback) => rootStyle.getPropertyValue(name).trim() || fallback;
+
+  function setShifts(activeIdx, phase) {
+    const lift = num('--avatar-lift', -4);
+    const falloff = num('--avatar-falloff', 0.45);
+    const scale = num('--avatar-scale', 1.05);
+    const timing = phase === 'out'
+      ? ease('--avatar-ease-out', 'cubic-bezier(0.34, 3.85, 0.64, 1)')
+      : ease('--avatar-ease-in', 'cubic-bezier(0.22, 1, 0.36, 1)');
+
+    avatars.forEach((el, i) => {
+      el.style.transitionTimingFunction = timing;
+      if (activeIdx == null) {
+        el.style.setProperty('--shift', '0px');
+        el.style.setProperty('--scale-active', '1');
+        return;
+      }
+      const distance = Math.abs(i - activeIdx);
+      el.style.setProperty('--shift', `${(lift * Math.pow(falloff, distance)).toFixed(3)}px`);
+      el.style.setProperty('--scale-active', i === activeIdx ? String(scale) : '1');
+    });
+  }
+
+  avatars.forEach((el, i) => {
+    // Stack left over right: the first avatar sits on top
+    el.style.zIndex = avatars.length - i;
+    el.addEventListener('mouseenter', () => setShifts(i, 'in'));
+  });
+  group.addEventListener('mouseleave', () => setShifts(null, 'out'));
+});
+
 // Page loader: matrix dot loader adapted from transitions.dev.
 // Each dot gets a --d delay (ms) into the shared pulse; the variant is just a delay table.
 const CORNERS = [0, 3, 12, 15];
