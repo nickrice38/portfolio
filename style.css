@@ -1,8 +1,173 @@
+/* Self-hosted fonts (SIL Open Font License, see OFL.txt beside each font).
+   Browsers only download the weights the page actually uses. */
+@font-face {
+  font-family: "Open Sauce Sans";
+  src: url("assets/fonts/open-sauce-sans/OpenSauceSans-Light.woff2") format("woff2");
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Open Sauce Sans";
+  src: url("assets/fonts/open-sauce-sans/OpenSauceSans-LightItalic.woff2") format("woff2");
+  font-weight: 300;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Open Sauce Sans";
+  src: url("assets/fonts/open-sauce-sans/OpenSauceSans-Regular.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Open Sauce Sans";
+  src: url("assets/fonts/open-sauce-sans/OpenSauceSans-Italic.woff2") format("woff2");
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Open Sauce Sans";
+  src: url("assets/fonts/open-sauce-sans/OpenSauceSans-Medium.woff2") format("woff2");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Open Sauce Sans";
+  src: url("assets/fonts/open-sauce-sans/OpenSauceSans-MediumItalic.woff2") format("woff2");
+  font-weight: 500;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Open Sauce Sans";
+  src: url("assets/fonts/open-sauce-sans/OpenSauceSans-SemiBold.woff2") format("woff2");
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Open Sauce Sans";
+  src: url("assets/fonts/open-sauce-sans/OpenSauceSans-SemiBoldItalic.woff2") format("woff2");
+  font-weight: 600;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Open Sauce Sans";
+  src: url("assets/fonts/open-sauce-sans/OpenSauceSans-Bold.woff2") format("woff2");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Open Sauce Sans";
+  src: url("assets/fonts/open-sauce-sans/OpenSauceSans-BoldItalic.woff2") format("woff2");
+  font-weight: 700;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Open Sauce Sans";
+  src: url("assets/fonts/open-sauce-sans/OpenSauceSans-ExtraBold.woff2") format("woff2");
+  font-weight: 800;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Open Sauce Sans";
+  src: url("assets/fonts/open-sauce-sans/OpenSauceSans-ExtraBoldItalic.woff2") format("woff2");
+  font-weight: 800;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Open Sauce Sans";
+  src: url("assets/fonts/open-sauce-sans/OpenSauceSans-Black.woff2") format("woff2");
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Open Sauce Sans";
+  src: url("assets/fonts/open-sauce-sans/OpenSauceSans-BlackItalic.woff2") format("woff2");
+  font-weight: 900;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Peace Sans";
+  src: url("assets/fonts/peace-sans/PeaceSans-Regular.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Cooper Black: local only (desktop licence, not committed). Visitors
+   without the file fall back to the display font. */
+@font-face {
+  font-family: "Cooper Black";
+  src: local("Cooper Black"), local("CooperBlack"),
+       url("assets/fonts/cooper-black/CooperBlack-Regular.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  --font-body: "Open Sauce Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-display: "Peace Sans", var(--font-body);
+  --font-heading: "Cooper Black", var(--font-display);
+
+  /* Colours: use as text-primary / text-secondary in Tailwind terms */
+  --color-primary: #4d5142;   /* olive green: headings, logo */
+  --color-secondary: #383b2f; /* body text */
+  --color-background-primary: #fdfdfd; /* page background */
+  --color-surface: #1b1b1b; /* tab bar, contact button and menu */
+
+  /* Type scale: Tailwind v4 text sizes (font-size / line-height) */
+  --text-xs: 0.75rem;   --text-xs--line-height: 1rem;
+  --text-sm: 0.875rem;  --text-sm--line-height: 1.25rem;
+  --text-base: 1rem;    --text-base--line-height: 1.5rem;
+  --text-lg: 1.125rem;  --text-lg--line-height: 1.75rem;
+  --text-xl: 1.25rem;   --text-xl--line-height: 1.75rem;
+  --text-2xl: 1.5rem;   --text-2xl--line-height: 2rem;
+  --text-3xl: 1.875rem; --text-3xl--line-height: 2.25rem;
+  --text-4xl: 2.25rem;  --text-4xl--line-height: 2.5rem;
+  --text-5xl: 3rem;     --text-5xl--line-height: 1;
+  --text-6xl: 3.75rem;  --text-6xl--line-height: 1;
+
+  /* Letter spacing: Tailwind v4 tracking scale */
+  --tracking-tighter: -0.05em;
+  --tracking-tight: -0.025em;
+  --tracking-normal: 0em;
+  --tracking-wide: 0.025em;
+  --tracking-wider: 0.05em;
+  --tracking-widest: 0.1em;
+}
+
 body {
   margin: 0;
-  background: #fff;
-  color: #000;
-  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background: var(--color-background-primary);
+  color: var(--color-secondary);
+  font-family: var(--font-body);
   -webkit-font-smoothing: antialiased;
 }
 
@@ -29,7 +194,7 @@ body {
   z-index: 100;
   display: grid;
   place-items: center;
-  background: #fff;
+  background: var(--color-background-primary);
   transition: opacity 300ms ease, visibility 300ms;
 }
 
@@ -73,14 +238,36 @@ body {
   --text-max-width: 560px; /* ~62 characters: readable line length for body text */
 }
 
+/* Pages sit side by side in a horizontal scroller that snaps a whole
+   page at a time, so the site can be swiped between tabs. Each page
+   scrolls vertically on its own. */
+.pager {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x mandatory;
+  overscroll-behavior-x: contain; /* don't trigger browser back/forward swipes */
+  scrollbar-width: none;
+}
+
+.pager::-webkit-scrollbar {
+  display: none;
+}
+
+.page {
+  flex: 0 0 100%;
+  height: 100%;
+  overflow-y: auto;
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+}
+
 .view {
   max-width: var(--content-max-width);
   margin-inline: auto;
-  padding: 24px 16px calc(120px + env(safe-area-inset-bottom, 0px));
-}
-
-.view[hidden] {
-  display: none;
+  padding: calc(24px + env(safe-area-inset-top, 0px)) 16px calc(120px + env(safe-area-inset-bottom, 0px));
 }
 
 /* Home: intro text */
@@ -88,7 +275,8 @@ body {
   max-width: var(--text-max-width);
   margin-inline: auto;
   padding-top: 48px;
-  font-size: 18px;
+  font-size: 17px;
+  font-weight: 500;
   line-height: 1.5;
   letter-spacing: -0.01em;
 }
@@ -97,7 +285,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 32px;
+  margin-bottom: 16px;
 }
 
 /* Avatars: empty placeholders until photos and logos go in */
@@ -108,8 +296,12 @@ body {
 }
 
 .avatar--me {
-  width: 64px;
-  height: 64px;
+  display: block;
+  flex-shrink: 0;
+  /* The mark fills 84% of its canvas, so 48px shows a ~40px mark,
+     matching the 40px company logos */
+  width: 48px;
+  height: 48px;
 }
 
 .avatar-group {
@@ -119,7 +311,12 @@ body {
 .avatar--logo {
   width: 40px;
   height: 40px;
-  box-shadow: 0 0 0 3px #fff;
+  box-shadow: 0 0 0 3px var(--color-background-primary);
+}
+
+a.avatar--logo:focus-visible {
+  outline: 2px solid #000;
+  outline-offset: 3px;
 }
 
 .avatar--logo + .avatar--logo {
@@ -130,11 +327,89 @@ body {
   margin: 0 0 1.1em;
 }
 
+.intro .intro__greeting {
+  font-family: var(--font-heading);
+  font-weight: 400;
+  font-size: var(--text-4xl);
+  line-height: var(--text-2xl--line-height);
+  letter-spacing: var(--tracking-tighter);
+  margin-bottom: 24px;
+  color: var(--color-primary);
+}
+
 .text-highlight {
   text-decoration: underline;
   text-decoration-color: #d4d4d4;
   text-decoration-thickness: 1.5px;
   text-underline-offset: 4px;
+}
+
+/* Link through to the Projects tab */
+.work-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--color-primary);
+  text-decoration: none;
+}
+
+.work-link__arrow {
+  width: 1em;
+  height: 1em;
+  transition: transform 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.work-link:hover .work-link__arrow,
+.work-link:focus-visible .work-link__arrow {
+  transform: translateX(4px);
+}
+
+/* Badge: flat seal with a rotating ring of text */
+:root {
+  --badge-size: 160px;
+  --badge-colour: #e2e2dc;
+  --badge-spin: 24s;
+}
+
+.badge {
+  width: var(--badge-size);
+  aspect-ratio: 1;
+  color: var(--badge-colour);
+}
+
+.badge__svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.badge__line {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 5.25; /* ~5.5% of the ring radius, as in the reference */
+  stroke-linecap: round;
+}
+
+.badge__mark {
+  fill: currentColor;
+}
+
+.badge__text {
+  fill: currentColor;
+  font-family: var(--font-heading);
+  font-size: 22px;
+  letter-spacing: 0.02em;
+  dominant-baseline: middle;
+}
+
+.badge__ring {
+  transform-origin: 100px 100px;
+  animation: badge-spin var(--badge-spin) linear infinite;
+}
+
+@keyframes badge-spin {
+  to { transform: rotate(360deg); }
 }
 
 /* Avatar group hover, adapted from transitions.dev "Avatar group hover" */
@@ -250,30 +525,202 @@ body {
   --check-ease-bob: cubic-bezier(0.34, 1.35, 0.64, 1);
 }
 
-.tab-bar {
+/* Dock: holds the tab bar and the contact button, fixed to the bottom */
+:root {
+  --tab-item-h: 48px;
+  --tab-bar-pad: 6px;
+  --dock-h: calc(var(--tab-item-h) + var(--tab-bar-pad) * 2);
+
+  /* Tailwind v4 shadow scale */
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+  --shadow-2xl: 0 25px 50px -12px rgb(0 0 0 / 0.25);
+
+  /* Surface depth: inner edges from Figma, soft Tailwind drop shadow */
+  --shadow-surface:
+    inset 0 2.5px 0 0 #5a5a5a,
+    inset 0 -1px 0 1.5px #333333,
+    var(--shadow-lg);
+}
+
+.dock {
   position: fixed;
   left: 0;
   right: 0;
   bottom: calc(24px + env(safe-area-inset-bottom, 0px));
   z-index: 2;
   width: fit-content;
+  margin-inline: auto;
+  display: flex;
+  align-items: flex-end;
+  gap: var(--dock-gap, 8px);
+}
+
+.tab-bar {
+  position: relative;
   touch-action: none;
   user-select: none;
   -webkit-user-select: none;
-  margin-inline: auto;
   display: flex;
   gap: 4px;
-  padding: 6px;
-  background: #000;
+  padding: var(--tab-bar-pad);
+  background: var(--color-surface);
   border-radius: 999px;
-  box-shadow: 0 8px 24px rgb(0 0 0 / 0.2);
+  box-shadow: var(--shadow-surface);
+}
+
+/* Contact: a round button beside the tab bar. Its panel grows out from behind
+   the button up to a card above the dock, the dock's full width, one gap above.
+   Motion adapted from transitions.dev "Plus to menu morph". */
+:root {
+  --dock-gap: 8px;
+  --morph-open-h: 136px;
+  --morph-open-dur: 350ms;
+  --morph-close-dur: 250ms;
+  --morph-ease: cubic-bezier(0.34, 1.25, 0.64, 1);
+  --morph-close-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --morph-r-closed: calc(var(--dock-h) / 2);
+  --morph-r-open: 24px;
+  --morph-fade-dur: 200ms;
+  --morph-slide: 12px;
+  --morph-rotate: 90deg;
+  --morph-scale: 0.97;
+  --morph-blur: 2px;
+}
+
+.contact-button {
+  position: relative;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: var(--dock-h);
+  height: var(--dock-h);
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--color-surface);
+  box-shadow: var(--shadow-surface);
+  color: rgb(255 255 255 / 0.6);
+  cursor: pointer;
+  transition: color var(--tabs-dur) var(--tabs-ease);
+}
+
+.contact-button:hover,
+.contact-button[aria-expanded="true"] {
+  color: #fff;
+}
+
+.contact-button:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: -4px;
+}
+
+/* @ rotates and fades into × when open */
+.contact-button svg {
+  grid-area: 1 / 1;
+  width: 24px;
+  height: 24px;
+  transition:
+    opacity var(--morph-fade-dur) var(--morph-close-ease),
+    transform var(--morph-open-dur) var(--morph-close-ease);
+}
+
+.contact-button__icon-close {
+  opacity: 0;
+  transform: rotate(calc(-1 * var(--morph-rotate))) scale(var(--morph-scale));
+}
+
+.contact-button[aria-expanded="true"] .contact-button__icon-open {
+  opacity: 0;
+  transform: rotate(var(--morph-rotate)) scale(var(--morph-scale));
+}
+
+.contact-button[aria-expanded="true"] .contact-button__icon-close {
+  opacity: 1;
+  transform: none;
+}
+
+/* Closed: tucked exactly behind the button. Open: the card above the dock. */
+.contact-panel {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  z-index: -1; /* behind the tab bar and button while it travels */
+  width: var(--dock-h);
+  height: var(--dock-h);
+  overflow: hidden; /* clips the links while the panel grows */
+  background: var(--color-surface);
+  border-radius: var(--morph-r-closed);
+  box-shadow: var(--shadow-lg);
+  transition:
+    width var(--morph-close-dur) var(--morph-close-ease),
+    height var(--morph-close-dur) var(--morph-close-ease),
+    bottom var(--morph-close-dur) var(--morph-close-ease),
+    border-radius var(--morph-close-dur) var(--morph-close-ease);
+}
+
+.contact-panel[data-open="true"] {
+  bottom: calc(var(--dock-h) + var(--dock-gap));
+  width: 100%;
+  height: var(--morph-open-h);
+  border-radius: var(--morph-r-open);
+  transition:
+    width var(--morph-open-dur) var(--morph-ease),
+    height var(--morph-open-dur) var(--morph-ease),
+    bottom var(--morph-open-dur) var(--morph-ease),
+    border-radius var(--morph-open-dur) var(--morph-ease);
+}
+
+/* Links start slid down, scaled and blurred; reveal on open */
+.contact-panel__menu {
+  position: absolute;
+  inset: var(--tab-bar-pad);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+  opacity: 0;
+  transform: translateY(var(--morph-slide)) scale(var(--morph-scale));
+  filter: blur(var(--morph-blur));
+  transition:
+    opacity var(--morph-fade-dur) var(--morph-close-ease),
+    transform var(--morph-open-dur) var(--morph-close-ease),
+    filter var(--morph-fade-dur) var(--morph-close-ease);
+}
+
+.contact-panel[data-open="true"] .contact-panel__menu {
+  opacity: 1;
+  transform: none;
+  filter: blur(0);
+}
+
+.contact-panel__link {
+  display: flex;
+  align-items: center;
+  height: 40px;
+  padding-inline: 14px;
+  border-radius: 16px;
+  color: rgb(255 255 255 / 0.7);
+  font-size: var(--text-base);
+  font-weight: 500;
+  white-space: nowrap;
+  text-decoration: none;
+  transition: color 0.15s, background-color 0.15s;
+}
+
+.contact-panel__link:hover,
+.contact-panel__link:focus-visible {
+  color: #fff;
+  background: rgb(255 255 255 / 0.08);
+  outline: none;
 }
 
 .tab-bar__item {
   display: grid;
   place-items: center;
   width: 56px;
-  height: 48px;
+  height: var(--tab-item-h);
   padding: 0;
   border: 0;
   border-radius: 999px;
@@ -305,11 +752,11 @@ body {
   color: #fff;
 }
 
-.tab-bar[data-state="out"] {
+.dock[data-state="out"] {
   opacity: 0;
 }
 
-.tab-bar[data-state="in"] {
+.dock[data-state="in"] {
   will-change: translate, opacity, filter;
   animation:
     t-check-fade   var(--check-opacity-dur) var(--check-ease-opacity) forwards,
@@ -330,13 +777,13 @@ body {
 /* Selected background: JS writes the active tab's position and size */
 .tab-bar__pill {
   position: absolute;
-  top: 0;
+  bottom: var(--tab-bar-pad);
   left: 0;
   width: 0;
   height: 0;
   border-radius: 999px;
   background: rgb(255 255 255 / 0.18);
-  transform: translate(0, 0);
+  transform: translateX(0);
   transition:
     transform var(--tabs-dur) var(--tabs-ease),
     width var(--tabs-dur) var(--tabs-ease);
@@ -351,7 +798,10 @@ body {
 
 @media (prefers-reduced-motion: reduce) {
   .tab-bar__pill,
-  .tab-bar__item {
+  .tab-bar__item,
+  .contact-panel,
+  .contact-panel__menu,
+  .contact-button svg {
     transition: none !important;
   }
 
@@ -359,20 +809,31 @@ body {
     animation: none !important;
   }
 
+  .badge__ring {
+    animation: none;
+  }
+
+  .work-link__arrow {
+    transition: none;
+  }
+
   .t-avatar {
     transition: none !important;
     transform: none !important;
   }
 
-  .tab-bar[data-state] {
+  .dock[data-state] {
     animation: none !important;
     opacity: 1;
   }
 }
 
 @media (max-width: 400px) {
+  :root {
+    --tab-item-h: 42px;
+  }
+
   .tab-bar__item {
     width: 48px;
-    height: 42px;
   }
 }

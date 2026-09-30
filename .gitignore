@@ -1,1 +1,4 @@
 .DS_Store
+assets/fonts/_source/
+# Cooper Black is licensed for desktop use only; keep it out of the public repo
+assets/fonts/cooper-black/

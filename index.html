@@ -4,9 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>Nick Rice</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&display=swap">
+  <link rel="preload" href="assets/fonts/open-sauce-sans/OpenSauceSans-Medium.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -15,35 +13,37 @@
     <div class="t-matrix" data-variant="pulse" data-rounded="true"></div>
   </div>
 
-  <main>
-    <section class="view" id="home" aria-label="Home">
-      <div class="intro">
-        <header class="intro__header">
-          <div class="avatar avatar--me" role="img" aria-label="Nick Rice"></div>
-          <div class="t-avatar-group avatar-group" aria-label="Companies I've worked with">
-          <div class="t-avatar avatar avatar--logo" role="img" aria-label="Fanatics" title="Fanatics" style="background-image: url(assets/logos/fanatics.png)"></div>
-          <div class="t-avatar avatar avatar--logo" role="img" aria-label="MoonPay" title="MoonPay" style="background-image: url(assets/logos/moonpay.png)"></div>
-          <div class="t-avatar avatar avatar--logo" role="img" aria-label="Starling" title="Starling" style="background-image: url(assets/logos/starling.png)"></div>
-          <div class="t-avatar avatar avatar--logo" role="img" aria-label="Searchable" title="Searchable"></div>
-          <div class="t-avatar avatar avatar--logo" role="img" aria-label="Lottie" title="Lottie"></div>
-          <div class="t-avatar avatar avatar--logo" role="img" aria-label="Luna" title="Luna"></div>
-          </div>
-        </header>
-        <p>Hi, I'm Nick Rice.</p>
-        <p>I'm a product designer based in London, UK.</p>
-        <p>I'm currently Director of Product Design at <span class="text-highlight">Fanatics</span>, building out a new sports prediction market.</p>
-        <p>I previously designed products at <span class="text-highlight">MoonPay</span> &amp; <span class="text-highlight">Starling</span>, and worked with early-stage startups such as <span class="text-highlight">Searchable</span>, <span class="text-highlight">Lottie</span> &amp; <span class="text-highlight">Luna</span>.</p>
+  <main class="pager">
+    <section class="page" data-view="home" aria-label="Home">
+      <div class="view">
+        <div class="intro">
+          <header class="intro__header">
+            <img class="avatar--me" src="assets/logo.svg" alt="Nick Rice">
+            <div class="t-avatar-group avatar-group" aria-label="Companies I've worked with">
+              <a class="t-avatar avatar avatar--logo" href="https://www.fanaticsmarkets.com" target="_blank" rel="noopener" aria-label="Fanatics" title="Fanatics" style="background-image: url(assets/logos/fanatics.png)"></a>
+              <a class="t-avatar avatar avatar--logo" href="https://www.moonpay.com/en-gb" target="_blank" rel="noopener" aria-label="MoonPay" title="MoonPay" style="background-image: url(assets/logos/moonpay.png)"></a>
+              <a class="t-avatar avatar avatar--logo" href="https://www.starlingbank.com/sb/" target="_blank" rel="noopener" aria-label="Starling" title="Starling" style="background-image: url(assets/logos/starling.png)"></a>
+            </div>
+          </header>
+          <p class="intro__greeting">nickrice</p>
+          <p>Product Designer based in London, UK.</p>
+          <p>Currently Director of Product Design at <span class="text-highlight">Fanatics</span>, building out a new sports prediction market.</p>
+          <p>Previously designed at <span class="text-highlight">MoonPay</span> &amp; <span class="text-highlight">Starling</span>, and worked with early-stage startups such as <span class="text-highlight">Searchable</span>, <span class="text-highlight">Lottie</span> &amp; <span class="text-highlight">Luna</span>.</p>
+          <p><a class="work-link" href="#projects">Take a peek <svg class="work-link__arrow" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor"><path d="M224.49,136.49l-72,72a12,12,0,0,1-17-17L187,140H40a12,12,0,0,1,0-24H187L135.51,64.48a12,12,0,0,1,17-17l72,72A12,12,0,0,1,224.49,136.49Z"/></svg></a></p>
+        </div>
       </div>
     </section>
 
-    <section class="view" id="projects" aria-label="Projects" hidden>
-      <div class="bento">
-        <article class="bento-card bento-card--full"></article>
-        <article class="bento-card bento-card--half"></article>
-        <article class="bento-card bento-card--half"></article>
-        <article class="bento-card bento-card--half"></article>
-        <article class="bento-card bento-card--half"></article>
-        <article class="bento-card bento-card--full"></article>
+    <section class="page" data-view="projects" aria-label="Projects">
+      <div class="view">
+        <div class="bento">
+          <article class="bento-card bento-card--full"></article>
+          <article class="bento-card bento-card--half"></article>
+          <article class="bento-card bento-card--half"></article>
+          <article class="bento-card bento-card--half"></article>
+          <article class="bento-card bento-card--half"></article>
+          <article class="bento-card bento-card--full"></article>
+        </div>
       </div>
     </section>
   </main>
@@ -52,17 +52,35 @@
     <div></div><div></div><div></div><div></div><div></div><div></div>
   </div>
 
-  <nav class="tab-bar" aria-label="Main" data-state="out">
-    <span class="tab-bar__pill" aria-hidden="true"></span>
-    <a class="tab-bar__item" href="#home" aria-label="Home" aria-current="page">
-      <svg class="icon-bold" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor"><path d="M222.14,105.85l-80-80a20,20,0,0,0-28.28,0l-80,80A19.86,19.86,0,0,0,28,120v96a12,12,0,0,0,12,12h64a12,12,0,0,0,12-12V164h24v52a12,12,0,0,0,12,12h64a12,12,0,0,0,12-12V120A19.86,19.86,0,0,0,222.14,105.85ZM204,204H164V152a12,12,0,0,0-12-12H104a12,12,0,0,0-12,12v52H52V121.65l76-76,76,76Z"/></svg>
-      <svg class="icon-fill" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor"><path d="M224,120v96a8,8,0,0,1-8,8H160a8,8,0,0,1-8-8V164a4,4,0,0,0-4-4H108a4,4,0,0,0-4,4v52a8,8,0,0,1-8,8H40a8,8,0,0,1-8-8V120a16,16,0,0,1,4.69-11.31l80-80a16,16,0,0,1,22.62,0l80,80A16,16,0,0,1,224,120Z"/></svg>
-    </a>
-    <a class="tab-bar__item" href="#projects" aria-label="Projects">
-      <svg class="icon-bold" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor"><path d="M100,36H56A20,20,0,0,0,36,56v44a20,20,0,0,0,20,20h44a20,20,0,0,0,20-20V56A20,20,0,0,0,100,36ZM96,96H60V60H96ZM200,36H156a20,20,0,0,0-20,20v44a20,20,0,0,0,20,20h44a20,20,0,0,0,20-20V56A20,20,0,0,0,200,36Zm-4,60H160V60h36Zm-96,40H56a20,20,0,0,0-20,20v44a20,20,0,0,0,20,20h44a20,20,0,0,0,20-20V156A20,20,0,0,0,100,136Zm-4,60H60V160H96Zm104-60H156a20,20,0,0,0-20,20v44a20,20,0,0,0,20,20h44a20,20,0,0,0,20-20V156A20,20,0,0,0,200,136Zm-4,60H160V160h36Z"/></svg>
-      <svg class="icon-fill" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor"><path d="M120,56v48a16,16,0,0,1-16,16H56a16,16,0,0,1-16-16V56A16,16,0,0,1,56,40h48A16,16,0,0,1,120,56Zm80-16H152a16,16,0,0,0-16,16v48a16,16,0,0,0,16,16h48a16,16,0,0,0,16-16V56A16,16,0,0,0,200,40Zm-96,96H56a16,16,0,0,0-16,16v48a16,16,0,0,0,16,16h48a16,16,0,0,0,16-16V152A16,16,0,0,0,104,136Zm96,0H152a16,16,0,0,0-16,16v48a16,16,0,0,0,16,16h48a16,16,0,0,0,16-16V152A16,16,0,0,0,200,136Z"/></svg>
-    </a>
-  </nav>
+  <div class="dock" data-state="out">
+    <nav class="tab-bar" aria-label="Main">
+      <span class="tab-bar__pill" aria-hidden="true"></span>
+      <a class="tab-bar__item" href="#home" aria-label="Home" aria-current="page">
+        <svg class="icon-bold" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor"><path d="M222.14,105.85l-80-80a20,20,0,0,0-28.28,0l-80,80A19.86,19.86,0,0,0,28,120v96a12,12,0,0,0,12,12h64a12,12,0,0,0,12-12V164h24v52a12,12,0,0,0,12,12h64a12,12,0,0,0,12-12V120A19.86,19.86,0,0,0,222.14,105.85ZM204,204H164V152a12,12,0,0,0-12-12H104a12,12,0,0,0-12,12v52H52V121.65l76-76,76,76Z"/></svg>
+        <svg class="icon-fill" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor"><path d="M224,120v96a8,8,0,0,1-8,8H160a8,8,0,0,1-8-8V164a4,4,0,0,0-4-4H108a4,4,0,0,0-4,4v52a8,8,0,0,1-8,8H40a8,8,0,0,1-8-8V120a16,16,0,0,1,4.69-11.31l80-80a16,16,0,0,1,22.62,0l80,80A16,16,0,0,1,224,120Z"/></svg>
+      </a>
+      <a class="tab-bar__item" href="#projects" aria-label="Projects">
+        <svg class="icon-bold" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor"><path d="M100,36H56A20,20,0,0,0,36,56v44a20,20,0,0,0,20,20h44a20,20,0,0,0,20-20V56A20,20,0,0,0,100,36ZM96,96H60V60H96ZM200,36H156a20,20,0,0,0-20,20v44a20,20,0,0,0,20,20h44a20,20,0,0,0,20-20V56A20,20,0,0,0,200,36Zm-4,60H160V60h36Zm-96,40H56a20,20,0,0,0-20,20v44a20,20,0,0,0,20,20h44a20,20,0,0,0,20-20V156A20,20,0,0,0,100,136Zm-4,60H60V160H96Zm104-60H156a20,20,0,0,0-20,20v44a20,20,0,0,0,20,20h44a20,20,0,0,0,20-20V156A20,20,0,0,0,200,136Zm-4,60H160V160h36Z"/></svg>
+        <svg class="icon-fill" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor"><path d="M120,56v48a16,16,0,0,1-16,16H56a16,16,0,0,1-16-16V56A16,16,0,0,1,56,40h48A16,16,0,0,1,120,56Zm80-16H152a16,16,0,0,0-16,16v48a16,16,0,0,0,16,16h48a16,16,0,0,0,16-16V56A16,16,0,0,0,200,40Zm-96,96H56a16,16,0,0,0-16,16v48a16,16,0,0,0,16,16h48a16,16,0,0,0,16-16V152A16,16,0,0,0,104,136Zm96,0H152a16,16,0,0,0-16,16v48a16,16,0,0,0,16,16h48a16,16,0,0,0,16-16V152A16,16,0,0,0,200,136Z"/></svg>
+      </a>
+    </nav>
+
+    <!-- Contact: round button; its panel grows out from behind it to sit above the dock -->
+    <button class="contact-button" type="button" aria-label="Contact" aria-expanded="false" aria-controls="contact-menu">
+      <svg class="contact-button__icon-open" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor"><path d="M232,128A104,104,0,0,1,79.12,219.82L45.07,231.17a16,16,0,0,1-20.24-20.24l11.35-34.05A104,104,0,1,1,232,128Z"/></svg>
+      <svg class="contact-button__icon-close" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor"><path d="M208.49,191.51a12,12,0,0,1-17,17L128,145,64.49,208.49a12,12,0,0,1-17-17L111,128,47.51,64.49a12,12,0,0,1,17-17L128,111l63.51-63.52a12,12,0,0,1,17,17L145,128Z"/></svg>
+    </button>
+    <div class="contact-panel" data-open="false">
+      <div class="contact-panel__menu" id="contact-menu" inert>
+        <!-- TODO: replace # with profile URLs -->
+        <a class="contact-panel__link" href="#" target="_blank" rel="noopener">X</a>
+        <a class="contact-panel__link" href="#" target="_blank" rel="noopener">LinkedIn</a>
+        <a class="contact-panel__link" href="#" target="_blank" rel="noopener">Instagram</a>
+      </div>
+    </div>
+  </div>
+    </div>
+  </div>
 
   <script src="script.js"></script>
 </body>

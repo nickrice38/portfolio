@@ -1,0 +1,34 @@
+<!--
+  Badge: flat seal with a rotating ring of text.
+
+  Usage: paste this markup anywhere on a page.
+  - Styles live in style.css under "Badge" (--badge-size, --badge-colour, --badge-spin).
+  - script.js measures the two labels and draws the arcs between them, so the
+    label text can be changed freely.
+  - Only one badge per page as-is: the <path> ids must be unique, so rename
+    badge-path-cw / badge-path-ccw (and their href) for a second copy.
+-->
+<div class="badge" role="img" aria-label="Nick Rice, Product Designer">
+  <svg class="badge__svg" viewBox="0 0 200 200" aria-hidden="true">
+    <defs>
+      <!-- Both start at 3 o'clock. Clockwise keeps the top label upright,
+           anticlockwise keeps the bottom label upright. -->
+      <path id="badge-path-cw" d="M 178 100 A 78 78 0 1 1 22 100 A 78 78 0 1 1 178 100" />
+      <path id="badge-path-ccw" d="M 178 100 A 78 78 0 1 0 22 100 A 78 78 0 1 0 178 100" />
+    </defs>
+    <circle class="badge__line" cx="100" cy="100" r="96" />
+    <g class="badge__ring">
+      <text class="badge__text" data-badge-label="top">
+        <textPath href="#badge-path-cw" startOffset="75%" text-anchor="middle">Nick Rice</textPath>
+      </text>
+      <text class="badge__text" data-badge-label="bottom">
+        <textPath href="#badge-path-ccw" startOffset="75%" text-anchor="middle">Product Designer</textPath>
+      </text>
+      <!-- Arcs between the labels; script sizes them to fit the text -->
+      <path class="badge__line" data-badge-arc="right" />
+      <path class="badge__line" data-badge-arc="left" />
+    </g>
+    <circle class="badge__line" cx="100" cy="100" r="59" />
+    <path class="badge__mark" transform="translate(66.3 66.3) scale(0.674)" d="M50.001 59.6108C61.2737 59.611 71.7913 62.8432 80.6785 68.4306C83.6861 70.3214 84.4037 74.352 82.1129 77.0673C74.409 86.1988 62.8826 91.9995 50 91.9995C37.1171 91.9995 25.5901 86.1989 17.8861 77.0672C15.5953 74.3519 16.3128 70.3215 19.3204 68.4307C28.2084 62.8428 38.7275 59.6108 50.001 59.6108ZM50 7.99951C73.1958 7.99951 91.9998 26.8038 92 49.9995C92 51.4877 91.9223 52.9577 91.7709 54.4058C91.2789 59.1111 85.8205 60.8344 81.6578 58.5862C72.2385 53.4992 61.4572 50.611 50.001 50.6108C38.5441 50.6108 27.7615 53.4988 18.3414 58.5862C14.1787 60.8343 8.72043 59.1109 8.22887 54.4054C8.0776 52.9574 8 51.4875 8 49.9995C8.00024 26.8038 26.8042 7.99951 50 7.99951Z" />
+  </svg>
+</div>

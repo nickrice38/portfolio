@@ -1,16 +1,11 @@
 // Highlight the tab bar link that matches the current hash,
 // sliding the pill behind it (adapted from transitions.dev "Tabs sliding").
 const pill = document.querySelector('.tab-bar__pill');
-const tabs = [...document.querySelectorAll('.tab-bar a')];
-
-function activeTab() {
-  const hash = location.hash || '#home';
-  return tabs.find((tab) => tab.getAttribute('href') === hash) || tabs[0];
-}
+const tabs = [...document.querySelectorAll('.tab-bar a.tab-bar__item')];
 
 function movePill(tab, animate) {
   const place = () => {
-    pill.style.transform = `translate(${tab.offsetLeft}px, ${tab.offsetTop}px)`;
+    pill.style.transform = `translateX(${tab.offsetLeft}px)`;
     pill.style.width = `${tab.offsetWidth}px`;
     pill.style.height = `${tab.offsetHeight}px`;
   };
@@ -28,25 +23,81 @@ function movePill(tab, animate) {
   pill.style.transition = prev;
 }
 
-function setActiveTab(animate) {
-  const current = activeTab();
-  tabs.forEach((tab) => {
-    if (tab === current) {
+// Pages live side by side in a snapping horizontal scroller. Tapping or
+// dragging the tab bar scrolls to a page; swiping the pages moves the pill
+// live and settles the tab when the scroll comes to rest.
+const pager = document.querySelector('.pager');
+const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+let currentIndex = 0;
+let programmaticScroll = false;
+let scrollEndTimer;
+
+const clampIndex = (i) => Math.min(Math.max(i, 0), tabs.length - 1);
+
+function indexFromHash() {
+  const hash = location.hash || '#home';
+  return clampIndex(tabs.findIndex((tab) => tab.getAttribute('href') === hash));
+}
+
+function activeTab() {
+  return tabs[currentIndex];
+}
+
+function markActive(index) {
+  currentIndex = index;
+  tabs.forEach((tab, i) => {
+    if (i === index) {
       tab.setAttribute('aria-current', 'page');
     } else {
       tab.removeAttribute('aria-current');
     }
   });
-  movePill(current, animate);
-  showView(current.getAttribute('href').slice(1));
 }
 
-// Show only the view whose id matches the active tab
-function showView(id) {
-  document.querySelectorAll('.view').forEach((view) => {
-    view.hidden = view.id !== id;
-  });
-  window.scrollTo(0, 0);
+function goTo(index, animate) {
+  markActive(index);
+  movePill(tabs[index], animate);
+
+  const left = index * pager.clientWidth;
+  if (Math.abs(pager.scrollLeft - left) < 1) return;
+
+  if (animate) {
+    // The pill animates itself via CSS; don't let the scroll drive it too
+    programmaticScroll = true;
+    pager.scrollTo({ left, behavior: reduceMotion.matches ? 'auto' : 'smooth' });
+  } else {
+    pager.scrollLeft = left;
+  }
+}
+
+pager.addEventListener('scroll', () => {
+  clearTimeout(scrollEndTimer);
+  scrollEndTimer = setTimeout(onScrollEnd, 120);
+  if (programmaticScroll) return;
+
+  // Swiping: position the pill between the two tabs we're travelling between
+  const progress = pager.scrollLeft / pager.clientWidth;
+  const i = clampIndex(Math.floor(progress));
+  const from = tabs[i];
+  const to = tabs[clampIndex(i + 1)];
+  const x = from.offsetLeft + (to.offsetLeft - from.offsetLeft) * (progress - i);
+  pill.style.transition = 'none';
+  pill.style.transform = `translateX(${x}px)`;
+
+  const nearest = clampIndex(Math.round(progress));
+  if (nearest !== currentIndex) markActive(nearest);
+});
+
+function onScrollEnd() {
+  programmaticScroll = false;
+  const index = clampIndex(Math.round(pager.scrollLeft / pager.clientWidth));
+  markActive(index);
+  pill.style.transition = '';
+  movePill(tabs[index], true);
+
+  // Keep the address in sync without triggering another navigation
+  const hash = tabs[index].getAttribute('href');
+  if (location.hash !== hash) history.replaceState(null, '', hash);
 }
 
 // Drag the pill across the tab bar; the tab only changes on release.
@@ -76,7 +127,7 @@ tabBar.addEventListener('pointermove', (event) => {
   const barLeft = tabBar.getBoundingClientRect().left + tabBar.clientLeft;
   const x = event.clientX - barLeft - pill.offsetWidth / 2;
   const clamped = Math.min(Math.max(x, first.offsetLeft), last.offsetLeft);
-  pill.style.transform = `translate(${clamped}px, ${first.offsetTop}px)`;
+  pill.style.transform = `translateX(${clamped}px)`;
 });
 
 function endDrag(event) {
@@ -122,9 +173,80 @@ tabBar.addEventListener('click', (event) => {
 // Stop the browser's native link dragging from hijacking the gesture
 tabBar.addEventListener('dragstart', (event) => event.preventDefault());
 
-window.addEventListener('hashchange', () => setActiveTab(true));
-window.addEventListener('resize', () => movePill(activeTab(), false));
-requestAnimationFrame(() => setActiveTab(false));
+// Contact button: its panel morphs out from behind it to sit above the dock
+// (adapted from transitions.dev "Plus to menu morph").
+// Closes on outside click, Escape, or navigation.
+const menuButton = document.querySelector('.contact-button');
+const contactPanel = document.querySelector('.contact-panel');
+const menu = contactPanel.querySelector('.contact-panel__menu');
+
+function setMenuOpen(open) {
+  contactPanel.setAttribute('data-open', String(open));
+  menuButton.setAttribute('aria-expanded', String(open));
+  menu.inert = !open;
+}
+
+menuButton.addEventListener('click', () => {
+  setMenuOpen(menuButton.getAttribute('aria-expanded') !== 'true');
+});
+
+document.addEventListener('click', (event) => {
+  if (!contactPanel.contains(event.target) && !menuButton.contains(event.target)) {
+    setMenuOpen(false);
+  }
+});
+
+document.addEventListener('keydown', (event) => {
+  if (event.key === 'Escape' && menuButton.getAttribute('aria-expanded') === 'true') {
+    setMenuOpen(false);
+    menuButton.focus();
+  }
+});
+
+tabs.forEach((tab) => tab.addEventListener('click', () => setMenuOpen(false)));
+pager.addEventListener('scroll', () => setMenuOpen(false), { passive: true });
+
+window.addEventListener('hashchange', () => goTo(indexFromHash(), true));
+window.addEventListener('resize', () => goTo(currentIndex, false));
+requestAnimationFrame(() => goTo(indexFromHash(), false));
+
+// Badge: centre the top label at 12 o'clock and the bottom label at 6 o'clock,
+// then draw the two arcs to fill the space between them with an even gap.
+const BADGE_RADIUS = 78;
+const BADGE_GAP = 8; // along the circle, in SVG units
+
+function layoutBadge(badge) {
+  const top = badge.querySelector('[data-badge-label="top"]');
+  const bottom = badge.querySelector('[data-badge-label="bottom"]');
+  if (!top || !bottom) return;
+
+  // Angles in degrees, clockwise from 3 o'clock (SVG's y axis points down)
+  const span = (label) => (label.getComputedTextLength() / BADGE_RADIUS) * (180 / Math.PI);
+  const gap = (BADGE_GAP / BADGE_RADIUS) * (180 / Math.PI);
+  const topSpan = span(top);
+  const bottomSpan = span(bottom);
+  const topEnd = 270 + topSpan / 2;
+  const topStart = 270 - topSpan / 2;
+  const bottomStart = 90 - bottomSpan / 2;
+  const bottomEnd = 90 + bottomSpan / 2;
+
+  const point = (deg) => {
+    const rad = (deg * Math.PI) / 180;
+    return `${(100 + BADGE_RADIUS * Math.cos(rad)).toFixed(2)} ${(100 + BADGE_RADIUS * Math.sin(rad)).toFixed(2)}`;
+  };
+  const arc = (from, to) => {
+    const large = to - from > 180 ? 1 : 0;
+    return `M ${point(from)} A ${BADGE_RADIUS} ${BADGE_RADIUS} 0 ${large} 1 ${point(to)}`;
+  };
+
+  badge.querySelector('[data-badge-arc="right"]').setAttribute('d', arc(topEnd - 360 + gap, bottomStart - gap));
+  badge.querySelector('[data-badge-arc="left"]').setAttribute('d', arc(bottomEnd + gap, topStart - gap));
+}
+
+// Measure once the fonts have loaded, so the arcs fit the real text
+document.fonts.ready.then(() => {
+  document.querySelectorAll('.badge').forEach(layoutBadge);
+});
 
 // Avatar group hover, adapted from transitions.dev.
 // Lifts the hovered avatar and its neighbours with a falloff. The timing
@@ -211,7 +333,7 @@ const pageLoader = document.querySelector('.page-loader');
 
 function finishLoading() {
   pageLoader.classList.add('is-done');
-  document.querySelector('.tab-bar').setAttribute('data-state', 'in');
+  document.querySelector('.dock').setAttribute('data-state', 'in');
 }
 
 // The loader is toggled with the `hidden` attribute in index.html
