@@ -364,6 +364,80 @@ a.avatar--logo:focus-visible {
   transform: translateX(4px);
 }
 
+/* Project modal: near full screen, animated out of the tapped card by script.js */
+:root {
+  --modal-inset: 24px;
+  --color-modal: var(--color-card);
+  --modal-overlay-in: 200ms;
+  --modal-overlay-out: 150ms;
+  --modal-open-dur: 520ms;
+  --modal-close-dur: 420ms;
+  --modal-ease: cubic-bezier(0.32, 0.72, 0, 1); /* iOS-style sheet curve */
+}
+
+.project-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  background: rgb(0 0 0 / 0.15);
+}
+
+.project-modal {
+  position: fixed;
+  inset: calc(var(--modal-inset) + env(safe-area-inset-top, 0px)) var(--modal-inset) calc(var(--modal-inset) + env(safe-area-inset-bottom, 0px));
+  z-index: 50;
+  overflow: hidden;
+  border-radius: var(--bento-radius);
+  background: var(--color-modal);
+  outline: none;
+}
+
+.project-modal__close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: rgb(0 0 0 / 0.06);
+  color: var(--color-secondary);
+  cursor: pointer;
+  transition: background-color 0.15s;
+}
+
+.project-modal__close:hover {
+  background: rgb(0 0 0 / 0.1);
+}
+
+.project-modal__close:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.project-modal__close svg {
+  width: 20px;
+  height: 20px;
+}
+
+.project-modal__body {
+  height: 100%;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  box-sizing: border-box;
+  padding: 72px 24px 48px;
+}
+
+@media (max-width: 400px) {
+  :root {
+    --modal-inset: 8px;
+  }
+}
+
 /* Badge: flat seal with a rotating ring of text */
 :root {
   --badge-size: 160px;
@@ -437,6 +511,7 @@ a.avatar--logo:focus-visible {
 :root {
   --bento-gap: 16px;
   --bento-radius: 32px;
+  --color-card: #f2f2f2;
 }
 
 .bento {
@@ -446,8 +521,18 @@ a.avatar--logo:focus-visible {
 }
 
 .bento-card {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 0;
   border-radius: var(--bento-radius);
-  background: #f2f2f2;
+  background: var(--color-card);
+  cursor: pointer;
+}
+
+.bento-card:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 3px;
 }
 
 .bento-card--full {

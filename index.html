@@ -37,12 +37,12 @@
     <section class="page" data-view="projects" aria-label="Projects">
       <div class="view">
         <div class="bento">
-          <article class="bento-card bento-card--full"></article>
-          <article class="bento-card bento-card--half"></article>
-          <article class="bento-card bento-card--half"></article>
-          <article class="bento-card bento-card--half"></article>
-          <article class="bento-card bento-card--half"></article>
-          <article class="bento-card bento-card--full"></article>
+          <button class="bento-card bento-card--full" type="button" aria-haspopup="dialog" aria-label="Open project"></button>
+          <button class="bento-card bento-card--half" type="button" aria-haspopup="dialog" aria-label="Open project"></button>
+          <button class="bento-card bento-card--half" type="button" aria-haspopup="dialog" aria-label="Open project"></button>
+          <button class="bento-card bento-card--half" type="button" aria-haspopup="dialog" aria-label="Open project"></button>
+          <button class="bento-card bento-card--half" type="button" aria-haspopup="dialog" aria-label="Open project"></button>
+          <button class="bento-card bento-card--full" type="button" aria-haspopup="dialog" aria-label="Open project"></button>
         </div>
       </div>
     </section>
@@ -50,6 +50,17 @@
 
   <div class="progressive-blur" aria-hidden="true">
     <div></div><div></div><div></div><div></div><div></div><div></div>
+  </div>
+
+  <!-- Project modal: grows out of the tapped bento card -->
+  <div class="project-backdrop" hidden></div>
+  <div class="project-modal" role="dialog" aria-modal="true" aria-label="Project" tabindex="-1" hidden>
+    <button class="project-modal__close" type="button" aria-label="Close">
+      <svg aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor"><path d="M208.49,191.51a12,12,0,0,1-17,17L128,145,64.49,208.49a12,12,0,0,1-17-17L111,128,47.51,64.49a12,12,0,0,1,17-17L128,111l63.51-63.52a12,12,0,0,1,17,17L145,128Z"/></svg>
+    </button>
+    <div class="project-modal__body">
+      <!-- Project write-up goes here -->
+    </div>
   </div>
 
   <div class="dock" data-state="out">

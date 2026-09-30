@@ -248,6 +248,104 @@ document.fonts.ready.then(() => {
   document.querySelectorAll('.badge').forEach(layoutBadge);
 });
 
+// Project modal: grows out of the tapped bento card and shrinks back into it.
+// The modal is laid out at its final size, then animated from the card's rect,
+// so it reads as the card itself opening up.
+const projectModal = document.querySelector('.project-modal');
+const projectBackdrop = document.querySelector('.project-backdrop');
+const projectClose = projectModal.querySelector('.project-modal__close');
+const projectBody = projectModal.querySelector('.project-modal__body');
+let openCard = null;
+let modalAnimating = false;
+
+function cssTime(name, fallback) {
+  const value = parseFloat(getComputedStyle(document.documentElement).getPropertyValue(name));
+  return Number.isFinite(value) ? value : fallback;
+}
+
+// Keyframes for position, size and colour, so the card's grey blends into the modal's white
+function rectFrames(from, to, fromColour, toColour) {
+  const frame = (r, backgroundColor) => ({
+    top: `${r.top}px`,
+    left: `${r.left}px`,
+    width: `${r.width}px`,
+    height: `${r.height}px`,
+    backgroundColor,
+  });
+  return [frame(from, fromColour), frame(to, toColour)];
+}
+
+const colourOf = (el) => getComputedStyle(el).backgroundColor;
+
+function openProject(card) {
+  if (openCard || modalAnimating) return;
+  openCard = card;
+  modalAnimating = true;
+
+  const from = card.getBoundingClientRect();
+  projectModal.hidden = false;
+  projectBackdrop.hidden = false;
+  const to = projectModal.getBoundingClientRect();
+  card.style.visibility = 'hidden';
+
+  const instant = reduceMotion.matches;
+  const duration = instant ? 0 : cssTime('--modal-open-dur', 520);
+  const easing = getComputedStyle(document.documentElement).getPropertyValue('--modal-ease').trim() || 'ease-out';
+
+  const grow = projectModal.animate(rectFrames(from, to, colourOf(card), colourOf(projectModal)), { duration, easing });
+  projectBackdrop.animate([{ opacity: 0 }, { opacity: 1 }], { duration: instant ? 0 : cssTime('--modal-overlay-in', 200), easing: 'ease-out' });
+  const reveal = [projectClose, projectBody].map((el) =>
+    el.animate([{ opacity: 0 }, { opacity: 1 }], { duration: duration * 0.6, delay: duration * 0.35, easing: 'ease-out', fill: 'backwards' })
+  );
+
+  Promise.all([grow.finished, ...reveal.map((a) => a.finished)]).then(() => {
+    modalAnimating = false;
+    // Focus the dialog itself (not the close button) so no focus ring shows after a tap
+    projectModal.focus({ preventScroll: true });
+  });
+}
+
+function closeProject() {
+  if (!openCard || modalAnimating) return;
+  modalAnimating = true;
+  const card = openCard;
+
+  const from = projectModal.getBoundingClientRect();
+  const to = card.getBoundingClientRect();
+  const instant = reduceMotion.matches;
+  const duration = instant ? 0 : cssTime('--modal-close-dur', 420);
+  const easing = getComputedStyle(document.documentElement).getPropertyValue('--modal-ease').trim() || 'ease-out';
+
+  [projectClose, projectBody].forEach((el) =>
+    el.animate([{ opacity: 1 }, { opacity: 0 }], { duration: duration * 0.4, easing: 'ease-in', fill: 'forwards' })
+  );
+  // Overlay clears quickly so it doesn't linger while the modal shrinks
+  projectBackdrop.animate([{ opacity: 1 }, { opacity: 0 }], { duration: instant ? 0 : cssTime('--modal-overlay-out', 150), easing: 'ease-out', fill: 'forwards' });
+  const shrink = projectModal.animate(rectFrames(from, to, colourOf(projectModal), colourOf(card)), { duration, easing, fill: 'forwards' });
+
+  shrink.finished.then(() => {
+    card.style.visibility = '';
+    projectModal.hidden = true;
+    projectBackdrop.hidden = true;
+    projectModal.getAnimations().forEach((a) => a.cancel());
+    projectBackdrop.getAnimations().forEach((a) => a.cancel());
+    [projectClose, projectBody].forEach((el) => el.getAnimations().forEach((a) => a.cancel()));
+    projectBody.scrollTop = 0;
+    openCard = null;
+    modalAnimating = false;
+    card.focus({ preventScroll: true });
+  });
+}
+
+document.querySelectorAll('.bento-card').forEach((card) => {
+  card.addEventListener('click', () => openProject(card));
+});
+projectClose.addEventListener('click', closeProject);
+projectBackdrop.addEventListener('click', closeProject);
+document.addEventListener('keydown', (event) => {
+  if (event.key === 'Escape' && openCard) closeProject();
+});
+
 // Avatar group hover, adapted from transitions.dev.
 // Lifts the hovered avatar and its neighbours with a falloff. The timing
 // function is set inline before the variables change, so hover-in eases
