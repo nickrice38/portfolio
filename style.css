@@ -530,6 +530,11 @@ a.avatar--logo:focus-visible {
   cursor: pointer;
 }
 
+/* Hidden until the Projects tab reveals them (see script.js) */
+.bento[data-revealed="false"] .bento-card {
+  opacity: 0;
+}
+
 .bento-card:focus-visible {
   outline: 2px solid var(--color-primary);
   outline-offset: 3px;

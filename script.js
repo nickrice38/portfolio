@@ -43,6 +43,38 @@ function activeTab() {
   return tabs[currentIndex];
 }
 
+// Projects reveal: cards fade in, rise and untilt, staggered row by row from the top
+const PROJECTS_INDEX = tabs.findIndex((tab) => tab.getAttribute('href') === '#projects');
+const bento = document.querySelector('.bento');
+const bentoCards = [...bento.querySelectorAll('.bento-card')];
+const REVEAL_STAGGER = 110; // ms between each row
+const REVEAL_DURATION = 900;
+const REVEAL_AT = 0.3; // start when Projects is within 30% of a page of arriving
+
+function revealProjects() {
+  bento.dataset.revealed = 'true';
+  if (reduceMotion.matches) return;
+  // Top to bottom by row; the second card in a row trails slightly for a left-to-right sweep
+  const rows = [...new Set(bentoCards.map((card) => card.offsetTop))].sort((a, b) => a - b);
+  bentoCards.forEach((card, i) => {
+    const row = rows.indexOf(card.offsetTop);
+    const inRow = bentoCards.filter((c, j) => j < i && c.offsetTop === card.offsetTop).length;
+    card.getAnimations().forEach((a) => a.cancel());
+    card.animate(
+      [
+        { opacity: 0, transform: 'translateY(12px) rotate(-2deg)' },
+        { opacity: 1, transform: 'none' },
+      ],
+      {
+        duration: REVEAL_DURATION,
+        delay: (row + inRow * 0.25) * REVEAL_STAGGER,
+        easing: 'cubic-bezier(0.22, 1, 0.36, 1)',
+        fill: 'backwards',
+      }
+    );
+  });
+}
+
 function markActive(index) {
   currentIndex = index;
   tabs.forEach((tab, i) => {
@@ -59,7 +91,11 @@ function goTo(index, animate) {
   movePill(tabs[index], animate);
 
   const left = index * pager.clientWidth;
-  if (Math.abs(pager.scrollLeft - left) < 1) return;
+  if (Math.abs(pager.scrollLeft - left) < 1) {
+    // Already in place (e.g. loading straight onto Projects): no scroll will end, so reveal now
+    if (index === PROJECTS_INDEX && bento.dataset.revealed !== 'true') revealProjects();
+    return;
+  }
 
   if (animate) {
     // The pill animates itself via CSS; don't let the scroll drive it too
@@ -73,6 +109,11 @@ function goTo(index, animate) {
 pager.addEventListener('scroll', () => {
   clearTimeout(scrollEndTimer);
   scrollEndTimer = setTimeout(onScrollEnd, 120);
+
+  // Start the Projects reveal as the page arrives (70% of the way), not after it stops
+  const distance = Math.abs(pager.scrollLeft / pager.clientWidth - PROJECTS_INDEX);
+  if (distance < REVEAL_AT && bento.dataset.revealed !== 'true') revealProjects();
+
   if (programmaticScroll) return;
 
   // Swiping: position the pill between the two tabs we're travelling between
@@ -94,6 +135,14 @@ function onScrollEnd() {
   markActive(index);
   pill.style.transition = '';
   movePill(tabs[index], true);
+
+  // Reveal once Projects has finished sliding in, so the motion isn't lost in the transition.
+  // Once it's fully off screen, reset the cards so the next visit reveals them again.
+  if (index === PROJECTS_INDEX) {
+    if (bento.dataset.revealed !== 'true') revealProjects();
+  } else {
+    bento.dataset.revealed = 'false';
+  }
 
   // Keep the address in sync without triggering another navigation
   const hash = tabs[index].getAttribute('href');
@@ -208,6 +257,7 @@ pager.addEventListener('scroll', () => setMenuOpen(false), { passive: true });
 
 window.addEventListener('hashchange', () => goTo(indexFromHash(), true));
 window.addEventListener('resize', () => goTo(currentIndex, false));
+bento.dataset.revealed = 'false';
 requestAnimationFrame(() => goTo(indexFromHash(), false));
 
 // Badge: centre the top label at 12 o'clock and the bottom label at 6 o'clock,
