@@ -81,11 +81,12 @@ export function mountPauseMenu(gridEl, grid, config, items) {
   // Mouse look: Esc releases the pointer before we see the key, so treat the release as pause.
   gridEl.addEventListener('unlock', () => !open && show());
 
-  // Keep the menu sized to the hole and centred on the grid.
+  // Keep the menu sized to the hole and sitting in it, wherever it is on screen.
   const sync = () => {
     const r = gridEl.getBoundingClientRect();
-    menu.style.left = `${r.left + r.width / 2}px`;
-    menu.style.top = `${r.top + r.height / 2}px`;
+    const hole = grid.holeRect;
+    menu.style.left = `${r.left + hole.x + hole.width / 2}px`;
+    menu.style.top = `${r.top + hole.y + hole.height / 2}px`;
     menu.style.width = `${grid.holeRect.width}px`;
     menu.style.height = `${grid.holeRect.height}px`;
     hud.style.left = `${r.left + 24}px`;

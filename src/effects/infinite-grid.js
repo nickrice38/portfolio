@@ -17,7 +17,6 @@ export function mountInfiniteGrid(el, config) {
   // The hole: a block of cells cleared for the menu. `origin` is its top-left
   // cell, `open` animates 0 (cards in place) to 1 (cards gone).
   const hole = { origin: null, open: 1, from: 1, to: 1, start: 0 };
-  let glide = null; // { from, to, start }: offset tween that centres the hole
 
   let aimAt = null; // mouse position relative to the centre, for joystick mode
   const locked = () => document.pointerLockElement === el;
@@ -197,12 +196,6 @@ export function mountInfiniteGrid(el, config) {
       offset.y = H / 2 - (hole.origin.row * pitchY + holeH / 2);
     }
     hole.open = hole.from + (hole.to - hole.from) * ease((now - hole.start) / transition);
-    if (glide) {
-      const t = ease((now - glide.start) / transition);
-      offset.x = glide.from.x + (glide.to.x - glide.from.x) * t;
-      offset.y = glide.from.y + (glide.to.y - glide.from.y) * t;
-      if (t >= 1) glide = null;
-    }
     const holeActive = hole.open > 0.001 && cols > 0 && rows > 0;
     const inHole = (col, row) =>
       holeActive && col >= hole.origin.col && col < hole.origin.col + cols && row >= hole.origin.row && row < hole.origin.row + rows;
@@ -213,7 +206,13 @@ export function mountInfiniteGrid(el, config) {
       const d = Math.min(1, Math.hypot(cx, cy) * Math.SQRT2); // 0 centre .. 1 corner
       return Math.min(1, Math.max(0, (1 - hole.open) * (1 + stagger) - (1 - d) * stagger));
     };
-    holeRect = { width: holeW, height: holeH };
+    // Where the hole sits on screen, relative to the grid's top-left.
+    holeRect = {
+      x: offset.x + hole.origin.col * pitchX,
+      y: offset.y + hole.origin.row * pitchY,
+      width: holeW,
+      height: holeH,
+    };
 
     // Nearest card to the centre of the screen, in flat grid space.
     const nearRow = Math.round((H / 2 - offset.y - h / 2) / pitchY);
@@ -294,11 +293,12 @@ export function mountInfiniteGrid(el, config) {
 
     requestAnimationFrame(tick);
   };
-  let holeRect = { width: 0, height: 0 };
+  let holeRect = { x: 0, y: 0, width: 0, height: 0 };
   tick();
 
   return {
-    // Clear a block of cards around the current view (centring it), or fill it back in.
+    // Clear the block of cards closest to the crosshair, or fill it back in.
+    // The view doesn't move; the menu follows the hole wherever it lands.
     setHole(open) {
       const { cols, rows } = config.home;
       const now = performance.now();
@@ -310,18 +310,10 @@ export function mountInfiniteGrid(el, config) {
         const pitchY = h + g.gapY * g.zoom;
         const holeW = cols * pitchX - (pitchX - w);
         const holeH = rows * pitchY - (pitchY - h);
-        // Grid-space point under the crosshair; pick the block of cells centred on it.
+        // Grid-space point under the crosshair; pick the block of cells centred nearest it.
         const gx = el.clientWidth / 2 - offset.x;
         const gy = el.clientHeight / 2 - offset.y;
         hole.origin = { col: Math.round((gx - holeW / 2) / pitchX), row: Math.round((gy - holeH / 2) / pitchY) };
-        glide = {
-          from: { ...offset },
-          to: {
-            x: el.clientWidth / 2 - (hole.origin.col * pitchX + holeW / 2),
-            y: el.clientHeight / 2 - (hole.origin.row * pitchY + holeH / 2),
-          },
-          start: now,
-        };
       }
       hole.from = hole.open;
       hole.to = open ? 1 : 0;
