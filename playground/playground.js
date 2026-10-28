@@ -51,6 +51,7 @@ const TIPS = {
   Zoom: 'Scales the whole grid up or down, gaps and corners included.',
   'Drag speed': 'How far the grid moves when you drag. 1 follows your mouse exactly.',
   'Scroll speed': 'How fast the grid moves with a trackpad or scroll wheel.',
+  'Key speed': 'How fast WASD or the arrow keys move the grid. It glides to a stop when you let go, using Inertia.',
   Inertia: 'How long the grid keeps gliding after you let go. 0 stops instantly.',
   'Drift X': 'Slow automatic movement sideways when nobody is touching it.',
   'Drift Y': 'Slow automatic movement up or down when nobody is touching it.',
@@ -167,6 +168,7 @@ warpFolder.addBinding(warp, 'perspective', { label: 'Depth', min: 300, max: 3000
 const motionFolder = pane.addFolder({ title: 'Motion' });
 motionFolder.addBinding(motion, 'dragSpeed', { label: 'Drag speed', min: 0.25, max: 3, step: 0.05 });
 motionFolder.addBinding(motion, 'wheelSpeed', { label: 'Scroll speed', min: 0, max: 3, step: 0.05 });
+motionFolder.addBinding(motion, 'keySpeed', { label: 'Key speed', min: 1, max: 40, step: 1 });
 motionFolder.addBinding(motion, 'inertia', { label: 'Inertia', min: 0, max: 0.99, step: 0.01 });
 motionFolder.addBinding(motion, 'driftX', { label: 'Drift X', min: -3, max: 3, step: 0.05 });
 motionFolder.addBinding(motion, 'driftY', { label: 'Drift Y', min: -3, max: 3, step: 0.05 });

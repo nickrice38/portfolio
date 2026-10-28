@@ -44,15 +44,47 @@ export function mountInfiniteGrid(el, config) {
     { passive: false },
   );
 
+  // WASD / arrow keys pan the view. W moves you up, so the grid slides down.
+  const KEYS = {
+    w: [0, 1], arrowup: [0, 1],
+    s: [0, -1], arrowdown: [0, -1],
+    a: [1, 0], arrowleft: [1, 0],
+    d: [-1, 0], arrowright: [-1, 0],
+  };
+  const held = new Set();
+  const typing = (e) => e.target.closest?.('input, textarea, select, [contenteditable]');
+  addEventListener('keydown', (e) => {
+    const key = e.key.toLowerCase();
+    if (!KEYS[key] || typing(e) || e.metaKey || e.ctrlKey || e.altKey) return;
+    e.preventDefault();
+    held.add(key);
+  });
+  addEventListener('keyup', (e) => held.delete(e.key.toLowerCase()));
+  addEventListener('blur', () => held.clear());
+
   const reduced = matchMedia('(prefers-reduced-motion: reduce)');
 
   const tick = () => {
     const { grid, motion } = config;
 
+    if (held.size) {
+      let kx = 0;
+      let ky = 0;
+      for (const key of held) {
+        kx += KEYS[key][0];
+        ky += KEYS[key][1];
+      }
+      const len = Math.hypot(kx, ky) || 1; // diagonals aren't faster
+      velocity.x = (kx / len) * motion.keySpeed;
+      velocity.y = (ky / len) * motion.keySpeed;
+    }
+
     if (!drag) {
-      const inertia = reduced.matches ? 0 : motion.inertia;
-      velocity.x *= inertia;
-      velocity.y *= inertia;
+      if (!held.size) {
+        const inertia = reduced.matches ? 0 : motion.inertia;
+        velocity.x *= inertia;
+        velocity.y *= inertia;
+      }
       offset.x += velocity.x;
       offset.y += velocity.y;
       if (!reduced.matches) {

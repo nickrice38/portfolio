@@ -12,6 +12,7 @@
   "motion": {
     "dragSpeed": 1,
     "wheelSpeed": 1,
+    "keySpeed": 12,
     "inertia": 0.92,
     "driftX": 0,
     "driftY": 0
