@@ -14,6 +14,7 @@ export function mountInfiniteGrid(el, config) {
   let lastInput = 0;
   let target = null;
   let paused = false;
+  let homed = false; // centre on the home area on the first frame
 
   let aimAt = null; // mouse position relative to the centre, for joystick mode
   const locked = () => document.pointerLockElement === el;
@@ -107,6 +108,10 @@ export function mountInfiniteGrid(el, config) {
   addEventListener('keydown', (e) => {
     const key = e.key.toLowerCase();
     if (paused || typing(e) || e.metaKey || e.ctrlKey || e.altKey) return;
+    if (key === 'h') {
+      homed = false;
+      return;
+    }
     if ((key === ' ' || key === 'enter') && target) {
       e.preventDefault();
       el.dispatchEvent(new CustomEvent('shoot', { detail: target }));
@@ -176,16 +181,37 @@ export function mountInfiniteGrid(el, config) {
     const H = el.clientHeight;
     const shiftOf = (row) => (row & 1) * grid.rowOffset * pitchX;
 
+    // Home: an empty block of cells at the middle of the grid, left free for content.
+    const { cols, rows } = config.home;
+    const homeCol0 = -Math.floor(cols / 2);
+    const homeRow0 = -Math.floor(rows / 2);
+    const isHome = (col, row) => col >= homeCol0 && col < homeCol0 + cols && row >= homeRow0 && row < homeRow0 + rows;
+    const homeX = homeCol0 * pitchX + (cols * pitchX - (pitchX - w)) / 2;
+    const homeY = homeRow0 * pitchY + (rows * pitchY - (pitchY - h)) / 2;
+    if (!homed) {
+      offset.x = W / 2 - (cols ? homeX : w / 2);
+      offset.y = H / 2 - (rows ? homeY : h / 2);
+      velocity.x = velocity.y = 0;
+      homed = true;
+    }
+    // Is the crosshair over the home area (gaps around it included)?
+    const inHome =
+      cols > 0 && rows > 0 &&
+      Math.abs(W / 2 - offset.x - homeX) <= (cols * pitchX) / 2 &&
+      Math.abs(H / 2 - offset.y - homeY) <= (rows * pitchY) / 2;
+
     // Nearest card to the centre of the screen, in flat grid space.
     const nearRow = Math.round((H / 2 - offset.y - h / 2) / pitchY);
     const nearCol = Math.round((W / 2 - offset.x - shiftOf(nearRow) - w / 2) / pitchX);
     const nearDx = nearCol * pitchX + shiftOf(nearRow) + offset.x + w / 2 - W / 2;
     const nearDy = nearRow * pitchY + offset.y + h / 2 - H / 2;
-    const onCard = Math.abs(nearDx) <= w / 2 && Math.abs(nearDy) <= h / 2;
+    const nearIsHome = isHome(nearCol, nearRow);
+    const onCard = !nearIsHome && Math.abs(nearDx) <= w / 2 && Math.abs(nearDy) <= h / 2;
 
     // Settle: once things are still, ease the nearest card under the crosshair.
+    // Resting in the home area is allowed, so it never settles there.
     const still = !drag && !held.size && Math.hypot(velocity.x, velocity.y) < 0.5;
-    if (still && !paused && aim.settle > 0 && performance.now() - lastInput > aim.settleDelay) {
+    if (still && !paused && !inHome && !nearIsHome && aim.settle > 0 && performance.now() - lastInput > aim.settleDelay) {
       offset.x -= nearDx * aim.settle;
       offset.y -= nearDy * aim.settle;
       velocity.x = velocity.y = 0;
@@ -226,7 +252,7 @@ export function mountInfiniteGrid(el, config) {
         const dy = row * pitchY + offset.y + h / 2 - H / 2;
         const px = warpX ? warpX.at(dx) : { pos: dx, z: 0, angle: 0 };
         const py = warpY ? warpY.at(dy) : { pos: dy, z: 0, angle: 0 };
-        if (px.hidden || py.hidden) continue;
+        if (px.hidden || py.hidden || isHome(col, row)) continue;
 
         const card = pool[i] ?? el.appendChild(Object.assign(document.createElement('div'), { className: 'infinite-grid__card' }));
         pool[i++] = card;
@@ -255,6 +281,10 @@ export function mountInfiniteGrid(el, config) {
   tick();
 
   return {
+    // Jump back to the home area.
+    home: () => {
+      homed = false;
+    },
     pause: (value) => {
       paused = value;
       if (value && locked()) document.exitPointerLock();

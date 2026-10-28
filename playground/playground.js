@@ -82,6 +82,8 @@ const TIPS = {
   Recoil: 'How far the grid kicks when you shoot, in pixels. 0 for no kick.',
   'Zoom delay': 'Pause after the shot before the card zooms open, in milliseconds. Lets the hitmarker land.',
   'Zoom time': 'How long the card takes to grow into the project view, in milliseconds.',
+  'Home width': 'How many cards wide the empty home area in the middle is. 0 turns it off.',
+  'Home height': 'How many cards tall the empty home area is.',
   'Link gaps': 'When on, the horizontal and vertical gaps move together.',
   'Gap X': 'Space between cards side to side.',
   'Gap Y': 'Space between rows of cards.',
@@ -151,7 +153,7 @@ function load(values) {
 }
 
 // Card
-const { grid, warp, crosshair, aim, shot, control, motion, colour } = config;
+const { grid, home, warp, crosshair, aim, shot, control, motion, colour } = config;
 const card = pane.addFolder({ title: 'Card' });
 card.addBinding(grid, 'cardWidth', { label: 'Width', min: 40, max: 800, step: 1 });
 card
@@ -188,6 +190,12 @@ gapX.on('change', linkFrom('gapX', 'gapY'));
 gapY.on('change', linkFrom('gapY', 'gapX'));
 layout.addBinding(grid, 'rowOffset', { label: 'Row offset', min: 0, max: 1, step: 0.01 });
 layout.addBinding(grid, 'zoom', { label: 'Zoom', min: 0.25, max: 3, step: 0.01 });
+
+// Home
+const homeFolder = pane.addFolder({ title: 'Home' });
+homeFolder.addBinding(home, 'cols', { label: 'Home width', min: 0, max: 6, step: 1 });
+homeFolder.addBinding(home, 'rows', { label: 'Home height', min: 0, max: 6, step: 1 });
+homeFolder.addButton({ title: 'Go home (H)' }).on('click', () => gridApi.home());
 
 // Warp
 const warpFolder = pane.addFolder({ title: 'Warp' });
