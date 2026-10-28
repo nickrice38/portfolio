@@ -1,13 +1,22 @@
 {
-  "hero": {
-    "spotlightEnabled": true,
-    "spotlightRadius": 280,
-    "spotlightSoftness": 0.6,
-    "followLag": 0.12
+  "grid": {
+    "cardWidth": 240,
+    "aspectRatio": 1.333,
+    "gapX": 24,
+    "gapY": 24,
+    "cornerRadius": 8,
+    "rowOffset": 0,
+    "zoom": 1
+  },
+  "motion": {
+    "dragSpeed": 1,
+    "wheelSpeed": 1,
+    "inertia": 0.92,
+    "driftX": 0,
+    "driftY": 0
   },
   "colour": {
-    "background": "#fdfdfd",
-    "text": "#383b2f",
-    "spotlight": "#e3e8d2"
+    "background": "#f4f4f2",
+    "card": "#d9d9d6"
   }
 }

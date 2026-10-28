@@ -2,15 +2,24 @@ import { Pane } from 'tweakpane';
 import saved from '../src/effects.config.json';
 import savedPresets from '../src/effects.presets.json';
 import { applyEffects } from '../src/effects/apply.js';
-import { mountSpotlight } from '../src/effects/spotlight.js';
-import '../src/effects/hero.css';
+import { mountInfiniteGrid } from '../src/effects/infinite-grid.js';
+import '../src/effects/infinite-grid.css';
 
 // Slider ranges per control. Anything not listed gets Tweakpane's default
 // (checkbox for booleans, colour picker for hex strings).
 const RANGES = {
-  'hero.spotlightRadius': { min: 40, max: 800, step: 1 },
-  'hero.spotlightSoftness': { min: 0, max: 1, step: 0.01 },
-  'hero.followLag': { min: 0.01, max: 1, step: 0.01 },
+  'grid.cardWidth': { min: 40, max: 800, step: 1 },
+  'grid.aspectRatio': { min: 0.5, max: 2.5, step: 0.001 },
+  'grid.gapX': { min: 0, max: 200, step: 1 },
+  'grid.gapY': { min: 0, max: 200, step: 1 },
+  'grid.cornerRadius': { min: 0, max: 64, step: 1 },
+  'grid.rowOffset': { min: 0, max: 1, step: 0.01 },
+  'grid.zoom': { min: 0.25, max: 3, step: 0.01 },
+  'motion.dragSpeed': { min: 0.25, max: 3, step: 0.05 },
+  'motion.wheelSpeed': { min: 0, max: 3, step: 0.05 },
+  'motion.inertia': { min: 0, max: 0.99, step: 0.01 },
+  'motion.driftX': { min: -3, max: 3, step: 0.05 },
+  'motion.driftY': { min: -3, max: 3, step: 0.05 },
 };
 
 const clone = (o) => structuredClone(o);
@@ -18,7 +27,7 @@ const config = clone(saved);
 const presets = clone(savedPresets);
 
 applyEffects(config);
-mountSpotlight(document.querySelector('.hero'), config);
+mountInfiniteGrid(document.querySelector('.canvas'), config);
 
 const pane = new Pane({ title: 'Effects' });
 

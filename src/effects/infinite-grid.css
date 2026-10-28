@@ -1,0 +1,22 @@
+.infinite-grid {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  background: var(--colour-background);
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+
+.infinite-grid.is-dragging {
+  cursor: grabbing;
+}
+
+.infinite-grid__card {
+  position: absolute;
+  top: 0;
+  left: 0;
+  background: var(--colour-card);
+  border-radius: calc(var(--grid-corner-radius) * var(--grid-zoom) * 1px);
+  will-change: transform;
+}

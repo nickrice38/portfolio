@@ -1,7 +1,7 @@
 import config from './effects.config.json';
 import { applyEffects } from './effects/apply.js';
-import { mountSpotlight } from './effects/spotlight.js';
-import './effects/hero.css';
+import { mountInfiniteGrid } from './effects/infinite-grid.js';
+import './effects/infinite-grid.css';
 
 applyEffects(config);
-mountSpotlight(document.querySelector('.hero'), config);
+mountInfiniteGrid(document.querySelector('.canvas'), config);
