@@ -2,6 +2,7 @@
   "grid": {
     "cardWidth": 240,
     "aspectRatio": 1.333,
+    "linkGaps": true,
     "gapX": 24,
     "gapY": 24,
     "cornerRadius": 8,

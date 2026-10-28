@@ -4,23 +4,22 @@ import savedPresets from '../src/effects.presets.json';
 import { applyEffects } from '../src/effects/apply.js';
 import { mountInfiniteGrid } from '../src/effects/infinite-grid.js';
 import '../src/effects/infinite-grid.css';
+import './panel.css';
 
-// Slider ranges per control. Anything not listed gets Tweakpane's default
-// (checkbox for booleans, colour picker for hex strings).
-const RANGES = {
-  'grid.cardWidth': { min: 40, max: 800, step: 1 },
-  'grid.aspectRatio': { min: 0.5, max: 2.5, step: 0.001 },
-  'grid.gapX': { min: 0, max: 200, step: 1 },
-  'grid.gapY': { min: 0, max: 200, step: 1 },
-  'grid.cornerRadius': { min: 0, max: 64, step: 1 },
-  'grid.rowOffset': { min: 0, max: 1, step: 0.01 },
-  'grid.zoom': { min: 0.25, max: 3, step: 0.01 },
-  'motion.dragSpeed': { min: 0.25, max: 3, step: 0.05 },
-  'motion.wheelSpeed': { min: 0, max: 3, step: 0.05 },
-  'motion.inertia': { min: 0, max: 0.99, step: 0.01 },
-  'motion.driftX': { min: -3, max: 3, step: 0.05 },
-  'motion.driftY': { min: -3, max: 3, step: 0.05 },
+const ASPECT_RATIOS = {
+  '1:1': 1,
+  '5:4': 5 / 4,
+  '4:3': 4 / 3,
+  '3:2': 3 / 2,
+  '16:10': 16 / 10,
+  '16:9': 16 / 9,
+  '21:9': 21 / 9,
+  '4:5': 4 / 5,
+  '3:4': 3 / 4,
+  '2:3': 2 / 3,
+  '9:16': 9 / 16,
 };
+const CUSTOM = 'Custom';
 
 const clone = (o) => structuredClone(o);
 const config = clone(saved);
@@ -29,13 +28,7 @@ const presets = clone(savedPresets);
 applyEffects(config);
 mountInfiniteGrid(document.querySelector('.canvas'), config);
 
-const pane = new Pane({ title: 'Effects' });
-
-function load(values) {
-  for (const group of Object.keys(config)) Object.assign(config[group], values[group]);
-  pane.refresh();
-  applyEffects(config);
-}
+const pane = new Pane({ container: document.querySelector('.panel') });
 
 const post = (path, data) =>
   fetch(path, { method: 'POST', body: JSON.stringify(data) }).then((r) => {
@@ -48,47 +41,115 @@ function flash(button, text) {
   setTimeout(() => (button.title = title), 1200);
 }
 
-for (const [group, values] of Object.entries(config)) {
-  const folder = pane.addFolder({ title: group });
-  for (const key of Object.keys(values)) {
-    folder.addBinding(values, key, { label: key, ...RANGES[`${group}.${key}`] });
-  }
+// UI-only state that maps onto config values.
+const ui = { ratio: CUSTOM, presetName: '', preset: '' };
+const syncRatio = () => {
+  const match = Object.entries(ASPECT_RATIOS).find(([, r]) => Math.abs(r - config.grid.aspectRatio) < 0.002);
+  ui.ratio = match ? match[0] : CUSTOM;
+};
+syncRatio();
+
+function load(values) {
+  for (const group of Object.keys(config)) Object.assign(config[group], values[group]);
+  syncRatio();
+  pane.refresh();
+  applyEffects(config);
 }
+
+// Card
+const { grid, motion, colour } = config;
+const card = pane.addFolder({ title: 'Card' });
+card.addBinding(grid, 'cardWidth', { label: 'Width', min: 40, max: 800, step: 1 });
+card
+  .addBinding(ui, 'ratio', {
+    label: 'Ratio',
+    options: { ...Object.fromEntries(Object.keys(ASPECT_RATIOS).map((k) => [k, k])), [CUSTOM]: CUSTOM },
+  })
+  .on('change', ({ value }) => {
+    if (value === CUSTOM) return;
+    grid.aspectRatio = Math.round(ASPECT_RATIOS[value] * 1000) / 1000;
+    pane.refresh();
+  });
+card
+  .addBinding(grid, 'aspectRatio', { label: 'Custom ratio', min: 0.5, max: 2.5, step: 0.001 })
+  .on('change', () => {
+    const before = ui.ratio;
+    syncRatio();
+    if (ui.ratio !== before) pane.refresh();
+  });
+card.addBinding(grid, 'cornerRadius', { label: 'Radius', min: 0, max: 64, step: 1 });
+
+// Layout
+const layout = pane.addFolder({ title: 'Layout' });
+layout.addBinding(grid, 'linkGaps', { label: 'Link gaps' });
+const gapX = layout.addBinding(grid, 'gapX', { label: 'Gap X', min: 0, max: 200, step: 1 });
+const gapY = layout.addBinding(grid, 'gapY', { label: 'Gap Y', min: 0, max: 200, step: 1 });
+const linkFrom = (src, dst) => () => {
+  if (grid.linkGaps && grid[dst] !== grid[src]) {
+    grid[dst] = grid[src];
+    pane.refresh();
+  }
+};
+gapX.on('change', linkFrom('gapX', 'gapY'));
+gapY.on('change', linkFrom('gapY', 'gapX'));
+layout.addBinding(grid, 'rowOffset', { label: 'Row offset', min: 0, max: 1, step: 0.01 });
+layout.addBinding(grid, 'zoom', { label: 'Zoom', min: 0.25, max: 3, step: 0.01 });
+
+// Motion
+const motionFolder = pane.addFolder({ title: 'Motion' });
+motionFolder.addBinding(motion, 'dragSpeed', { label: 'Drag speed', min: 0.25, max: 3, step: 0.05 });
+motionFolder.addBinding(motion, 'wheelSpeed', { label: 'Scroll speed', min: 0, max: 3, step: 0.05 });
+motionFolder.addBinding(motion, 'inertia', { label: 'Inertia', min: 0, max: 0.99, step: 0.01 });
+motionFolder.addBinding(motion, 'driftX', { label: 'Drift X', min: -3, max: 3, step: 0.05 });
+motionFolder.addBinding(motion, 'driftY', { label: 'Drift Y', min: -3, max: 3, step: 0.05 });
+
+// Fill
+const fill = pane.addFolder({ title: 'Fill' });
+fill.addBinding(colour, 'background', { label: 'Canvas' });
+fill.addBinding(colour, 'card', { label: 'Card' });
+
 pane.on('change', () => applyEffects(config));
 
-const actions = pane.addFolder({ title: 'config' });
-const copyBtn = actions.addButton({ title: 'Copy config' });
-copyBtn.on('click', async () => {
-  await navigator.clipboard.writeText(JSON.stringify(config, null, 2));
-  flash(copyBtn, 'Copied');
-});
-const saveBtn = actions.addButton({ title: 'Save to config' });
-saveBtn.on('click', async () => {
-  await post('/__effects/config', config);
-  Object.assign(saved, clone(config));
-  flash(saveBtn, 'Saved');
-});
-actions.addButton({ title: 'Reset to saved' }).on('click', () => load(saved));
-
-const presetFolder = pane.addFolder({ title: 'presets' });
-const presetState = { name: '', selected: '' };
-presetFolder.addBinding(presetState, 'name', { label: 'new name' });
-presetFolder.addButton({ title: 'Save preset' }).on('click', async () => {
-  const name = presetState.name.trim();
-  if (!name) return;
-  presets[name] = clone(config);
-  await post('/__effects/presets', presets);
-  presetState.selected = name;
-  renderPresetList();
-});
-
+// Presets
+const presetFolder = pane.addFolder({ title: 'Presets' });
 let presetList;
 function renderPresetList() {
   presetList?.dispose();
-  const options = Object.fromEntries(Object.keys(presets).map((n) => [n, n]));
-  if (!Object.keys(options).length) return;
-  presetState.selected ||= Object.keys(options)[0];
-  presetList = presetFolder.addBinding(presetState, 'selected', { label: 'load', options, index: 1 });
+  const names = Object.keys(presets);
+  if (!names.length) return;
+  ui.preset ||= names[0];
+  presetList = presetFolder.addBinding(ui, 'preset', {
+    label: 'Load',
+    options: Object.fromEntries(names.map((n) => [n, n])),
+    index: 0,
+  });
   presetList.on('change', ({ value }) => load(presets[value]));
 }
+presetFolder.addBinding(ui, 'presetName', { label: 'Name' });
+presetFolder.addButton({ title: 'Save as preset' }).on('click', async () => {
+  const name = ui.presetName.trim();
+  if (!name) return;
+  presets[name] = clone(config);
+  await post('/__effects/presets', presets);
+  ui.preset = name;
+  ui.presetName = '';
+  renderPresetList();
+  pane.refresh();
+});
 renderPresetList();
+
+// Config
+const actions = pane.addFolder({ title: 'Config' });
+const saveBtn = actions.addButton({ title: 'Save to config' });
+saveBtn.element.classList.add('is-primary');
+saveBtn.on('click', async () => {
+  await post('/__effects/config', config);
+  Object.assign(saved, clone(config));
+  flash(saveBtn, 'Saved ✓');
+});
+const copyBtn = actions.addButton({ title: 'Copy JSON' });
+copyBtn.on('click', async () => {
+  await navigator.clipboard.writeText(JSON.stringify(config, null, 2));
+  flash(copyBtn, 'Copied ✓');
+});
+actions.addButton({ title: 'Reset to saved' }).on('click', () => load(saved));
