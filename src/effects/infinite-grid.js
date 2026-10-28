@@ -14,9 +14,9 @@ export function mountInfiniteGrid(el, config) {
   let lastInput = 0;
   let target = null;
   let paused = false;
-  // The hole: a block of cells cleared for the menu. `origin` is its top-left
-  // cell, `open` animates 0 (cards in place) to 1 (cards gone).
-  const hole = { origin: null, open: 1, from: 1, to: 1, start: 0 };
+  // The hole: a space at the centre of the screen cleared for the menu.
+  // `open` animates 0 (cards in place) to 1 (cards parted).
+  const hole = { open: 1, from: 1, to: 1, start: 0 };
 
   let aimAt = null; // mouse position relative to the centre, for joystick mode
   const locked = () => document.pointerLockElement === el;
@@ -183,44 +183,43 @@ export function mountInfiniteGrid(el, config) {
     const H = el.clientHeight;
     const shiftOf = (row) => (row & 1) * grid.rowOffset * pitchX;
 
-    // The hole: cells cleared for the menu, eased open and closed over time.
-    const { cols, rows, transition, stagger } = config.home;
+    // The hole: cards overlapping the menu fade out, the rest are pushed
+    // outward from the centre, most strongly near the menu.
+    const { width: menuW, height: menuH, clear, push, falloff, transition, stagger } = config.home;
     const now = performance.now();
     const ease = (t) => 1 - (1 - Math.min(1, Math.max(0, t))) ** 3;
-    const holeW = cols * pitchX - (pitchX - w);
-    const holeH = rows * pitchY - (pitchY - h);
-    if (!hole.origin) {
-      // First frame: hole at the middle of the grid, already open and centred.
-      hole.origin = { col: -Math.floor(cols / 2), row: -Math.floor(rows / 2) };
-      offset.x = W / 2 - (hole.origin.col * pitchX + holeW / 2);
-      offset.y = H / 2 - (hole.origin.row * pitchY + holeH / 2);
-    }
     hole.open = hole.from + (hole.to - hole.from) * ease((now - hole.start) / transition);
-    const holeActive = hole.open > 0.001 && cols > 0 && rows > 0;
-    const inHole = (col, row) =>
-      holeActive && col >= hole.origin.col && col < hole.origin.col + cols && row >= hole.origin.row && row < hole.origin.row + rows;
-    // 0..1 visibility for a hole card. Cards nearest the middle leave first and return last.
-    const presence = (col, row) => {
-      const cx = (col - hole.origin.col + 0.5) / cols - 0.5;
-      const cy = (row - hole.origin.row + 0.5) / rows - 0.5;
-      const d = Math.min(1, Math.hypot(cx, cy) * Math.SQRT2); // 0 centre .. 1 corner
-      return Math.min(1, Math.max(0, (1 - hole.open) * (1 + stagger) - (1 - d) * stagger));
+    const holeActive = hole.open > 0.001;
+    // Distances are measured in "menu units": 1 means a card just clears the
+    // menu with a gap to spare, on the nearest side.
+    const reachX = menuW / 2 + w / 2 + grid.gapX * grid.zoom;
+    const reachY = menuH / 2 + h / 2 + grid.gapY * grid.zoom;
+    const shove = push * (1 - clear);
+    const spread = Math.max(falloff, shove + 0.01); // wider than the push, so cards never overtake
+    const part = (dx, dy) => {
+      if (!holeActive) return { dx, dy, shown: 1, squash: 1 };
+      const m = Math.max(Math.abs(dx / reachX), Math.abs(dy / reachY));
+      if (m < clear) {
+        // Inside the menu: fade out, nearest the centre first.
+        const shown = Math.min(1, Math.max(0, (1 - hole.open) * (1 + stagger) - (1 - m / clear) * stagger));
+        return { dx, dy, shown, squash: 1 };
+      }
+      // Outside: slide along the line from the centre to a distance that clears the menu.
+      // The push fades with distance, which squeezes cards together near the menu,
+      // so they shrink by the same amount (like a fisheye) to never overlap.
+      const falling = Math.exp(-(m - clear) / spread);
+      const k = 1 + ((shove * falling) / m) * hole.open;
+      const squash = 1 - (shove / spread) * falling * hole.open;
+      return { dx: dx * k, dy: dy * k, shown: 1, squash };
     };
-    // Where the hole sits on screen, relative to the grid's top-left.
-    holeRect = {
-      x: offset.x + hole.origin.col * pitchX,
-      y: offset.y + hole.origin.row * pitchY,
-      width: holeW,
-      height: holeH,
-    };
+    holeRect = { x: W / 2 - menuW / 2, y: H / 2 - menuH / 2, width: menuW, height: menuH };
 
     // Nearest card to the centre of the screen, in flat grid space.
     const nearRow = Math.round((H / 2 - offset.y - h / 2) / pitchY);
     const nearCol = Math.round((W / 2 - offset.x - shiftOf(nearRow) - w / 2) / pitchX);
     const nearDx = nearCol * pitchX + shiftOf(nearRow) + offset.x + w / 2 - W / 2;
     const nearDy = nearRow * pitchY + offset.y + h / 2 - H / 2;
-    const nearIsHome = inHole(nearCol, nearRow);
-    const onCard = !nearIsHome && Math.abs(nearDx) <= w / 2 && Math.abs(nearDy) <= h / 2;
+    const onCard = !holeActive && Math.abs(nearDx) <= w / 2 && Math.abs(nearDy) <= h / 2;
 
     // Settle: once things are still, ease the nearest card under the crosshair.
     const still = !drag && !held.size && Math.hypot(velocity.x, velocity.y) < 0.5;
@@ -261,18 +260,19 @@ export function mountInfiniteGrid(el, config) {
       const shift = shiftOf(row);
       for (let col = col0; col <= col1; col++) {
         // Card centre relative to the viewport centre, before warping.
-        const dx = col * pitchX + shift + offset.x + w / 2 - W / 2;
-        const dy = row * pitchY + offset.y + h / 2 - H / 2;
+        const { dx, dy, shown, squash } = part(
+          col * pitchX + shift + offset.x + w / 2 - W / 2,
+          row * pitchY + offset.y + h / 2 - H / 2,
+        );
         const px = warpX ? warpX.at(dx) : { pos: dx, z: 0, angle: 0 };
         const py = warpY ? warpY.at(dy) : { pos: dy, z: 0, angle: 0 };
-        const shown = inHole(col, row) ? presence(col, row) : 1;
         if (px.hidden || py.hidden || shown <= 0) continue;
 
         const card = pool[i] ?? el.appendChild(Object.assign(document.createElement('div'), { className: 'infinite-grid__card' }));
         pool[i++] = card;
         const cellKey = `${col},${row}`;
         const lift = lifts.get(cellKey) ?? 0;
-        const scale = (1 + lift * (aim.liftScale - 1)) * (0.6 + 0.4 * shown);
+        const scale = (1 + lift * (aim.liftScale - 1)) * (0.6 + 0.4 * shown) * squash;
         // One tilt about a combined axis, so corners don't twist like they
         // would with separate rotateX/rotateY.
         const tilt = Math.hypot(px.angle, py.angle);
@@ -297,24 +297,9 @@ export function mountInfiniteGrid(el, config) {
   tick();
 
   return {
-    // Clear the block of cards closest to the crosshair, or fill it back in.
-    // The view doesn't move; the menu follows the hole wherever it lands.
+    // Part the cards around the centre of the screen for the menu, or close them back up.
     setHole(open) {
-      const { cols, rows } = config.home;
       const now = performance.now();
-      if (open) {
-        const g = config.grid;
-        const w = g.cardWidth * g.zoom;
-        const h = w / g.aspectRatio;
-        const pitchX = w + g.gapX * g.zoom;
-        const pitchY = h + g.gapY * g.zoom;
-        const holeW = cols * pitchX - (pitchX - w);
-        const holeH = rows * pitchY - (pitchY - h);
-        // Grid-space point under the crosshair; pick the block of cells centred nearest it.
-        const gx = el.clientWidth / 2 - offset.x;
-        const gy = el.clientHeight / 2 - offset.y;
-        hole.origin = { col: Math.round((gx - holeW / 2) / pitchX), row: Math.round((gy - holeH / 2) / pitchY) };
-      }
       hole.from = hole.open;
       hole.to = open ? 1 : 0;
       hole.start = now;
