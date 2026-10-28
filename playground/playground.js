@@ -85,10 +85,10 @@ const TIPS = {
   Recoil: 'How far the grid kicks when you shoot, in pixels. 0 for no kick.',
   'Zoom delay': 'Pause after the shot before the card zooms open, in milliseconds. Lets the hitmarker land.',
   'Zoom time': 'How long the card takes to grow into the project view, in milliseconds.',
-  'Menu width': 'Width the menu needs, in pixels. Enough whole cards are cleared to fit it, always dead centre.',
-  'Menu height': 'Height the menu needs, in pixels. Enough whole rows are cleared to fit it.',
-  Transition: 'How long the cards take to clear out or fill back in, in milliseconds.',
-  Stagger: 'How spread out the card animation is. 0 moves them all together; higher ripples from the middle outwards.',
+  'Menu width': 'Width of the space the cards move aside for, in pixels. Always dead centre.',
+  'Menu height': 'Height of the space the cards move aside for, in pixels.',
+  Transition: 'How long the cards take to slide aside or back, in milliseconds.',
+  Split: 'Which way the cards move aside. Both ways opens a cross around the menu; Sideways parts them like curtains; Up and down like a lift.',
   'Link gaps': 'When on, the horizontal and vertical gaps move together.',
   'Gap X': 'Space between cards side to side.',
   'Gap Y': 'Space between rows of cards.',
@@ -202,7 +202,7 @@ const homeFolder = pane.addFolder({ title: 'Menu' });
 homeFolder.addBinding(home, 'width', { label: 'Menu width', min: 200, max: 1000, step: 10 });
 homeFolder.addBinding(home, 'height', { label: 'Menu height', min: 150, max: 800, step: 10 });
 homeFolder.addBinding(home, 'transition', { label: 'Transition', min: 200, max: 2000, step: 10 });
-homeFolder.addBinding(home, 'stagger', { label: 'Stagger', min: 0, max: 2, step: 0.05 });
+homeFolder.addBinding(home, 'split', { label: 'Split', options: { 'Both ways': 'both', Sideways: 'horizontal', 'Up and down': 'vertical' } });
 homeFolder.addButton({ title: 'Open menu (Esc)' }).on('click', () => menu.show());
 homeFolder.addButton({ title: 'Play' }).on('click', () => menu.play());
 

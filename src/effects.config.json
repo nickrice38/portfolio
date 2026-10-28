@@ -14,7 +14,7 @@
     "width": 480,
     "height": 380,
     "transition": 700,
-    "stagger": 0.6
+    "split": "both"
   },
   "control": {
     "mode": "drag",

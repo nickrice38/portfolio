@@ -14,10 +14,10 @@ export function mountInfiniteGrid(el, config) {
   let lastInput = 0;
   let target = null;
   let paused = false;
-  // The hole: a block of whole cells cleared for the menu. `origin` is its
-  // top-left cell; `open` animates 0 (cards in place) to 1 (cards gone).
-  const hole = { origin: null, cols: 0, rows: 0, open: 1, from: 1, to: 1, start: 0 };
-  let glide = null; // { from, to, start }: slides the whole grid so the hole is centred
+  // The hole: the grid splits at the crosshair and each side slides straight out
+  // of the way for the menu. `split` is fixed when it opens (in grid space);
+  // `open` animates 0 (cards in place) to 1 (cards moved aside).
+  const hole = { split: null, open: 1, from: 1, to: 1, start: 0 };
 
   let aimAt = null; // mouse position relative to the centre, for joystick mode
   const locked = () => document.pointerLockElement === el;
@@ -184,38 +184,18 @@ export function mountInfiniteGrid(el, config) {
     const H = el.clientHeight;
     const shiftOf = (row) => (row & 1) * grid.rowOffset * pitchX;
 
-    // The hole: the smallest block of whole cells that fits the menu. The grid
-    // slides as one piece (at most half a cell) so the block sits dead centre,
-    // keeping every card the same size and aligned.
-    const { width: menuW, height: menuH, transition, stagger } = config.home;
-    const now = performance.now();
+    const { width: menuW, height: menuH, transition } = config.home;
     const ease = (t) => 1 - (1 - Math.min(1, Math.max(0, t))) ** 3;
-    if (!hole.origin) {
-      placeHole(pitchX, pitchY, w, h, W, H);
-      offset.x = glide.to.x;
-      offset.y = glide.to.y;
-      glide = null;
-    }
-    hole.open = hole.from + (hole.to - hole.from) * ease((now - hole.start) / transition);
-    if (glide) {
-      const t = ease((now - glide.start) / transition);
-      offset.x = glide.from.x + (glide.to.x - glide.from.x) * t;
-      offset.y = glide.from.y + (glide.to.y - glide.from.y) * t;
-      if (t >= 1) glide = null;
-    }
+    if (!hole.split) splitAt(pitchX, pitchY, w, h, W, H);
+    hole.open = hole.from + (hole.to - hole.from) * ease((performance.now() - hole.start) / transition);
     const holeActive = hole.open > 0.001;
-    const { col: c0, row: r0 } = hole.origin;
-    const inHole = (col, row) => holeActive && col >= c0 && col < c0 + hole.cols && row >= r0 && row < r0 + hole.rows;
-    // 0..1 visibility for a hole card. Cards nearest the middle leave first and return last.
-    const presence = (col, row) => {
-      const cx = (col - c0 + 0.5) / hole.cols - 0.5;
-      const cy = (row - r0 + 0.5) / hole.rows - 0.5;
-      const d = Math.min(1, Math.hypot(cx, cy) * Math.SQRT2); // 0 centre .. 1 corner
-      return Math.min(1, Math.max(0, (1 - hole.open) * (1 + stagger) - (1 - d) * stagger));
-    };
-    const holeCx = offset.x + c0 * pitchX + (hole.cols * pitchX - (pitchX - w)) / 2;
-    const holeCy = offset.y + r0 * pitchY + (hole.rows * pitchY - (pitchY - h)) / 2;
-    holeRect = { x: holeCx - menuW / 2, y: holeCy - menuH / 2, width: menuW, height: menuH };
+    // Move a card centre (grid space) to its side of the split.
+    const { x: sx, y: sy, left, right, up, down } = hole.split;
+    const part = (gx, gy) => ({
+      x: (gx < sx ? -left : right) * hole.open,
+      y: (gy < sy ? -up : down) * hole.open,
+    });
+    holeRect = { x: W / 2 - menuW / 2, y: H / 2 - menuH / 2, width: menuW, height: menuH };
 
     // Nearest card to the centre of the screen, in flat grid space.
     const nearRow = Math.round((H / 2 - offset.y - h / 2) / pitchY);
@@ -263,18 +243,20 @@ export function mountInfiniteGrid(el, config) {
       const shift = shiftOf(row);
       for (let col = col0; col <= col1; col++) {
         // Card centre relative to the viewport centre, before warping.
-        const dx = col * pitchX + shift + offset.x + w / 2 - W / 2;
-        const dy = row * pitchY + offset.y + h / 2 - H / 2;
-        const shown = inHole(col, row) ? presence(col, row) : 1;
+        const gx = col * pitchX + shift + w / 2;
+        const gy = row * pitchY + h / 2;
+        const moved = holeActive ? part(gx, gy) : { x: 0, y: 0 };
+        const dx = gx + offset.x - W / 2 + moved.x;
+        const dy = gy + offset.y - H / 2 + moved.y;
         const px = warpX ? warpX.at(dx) : { pos: dx, z: 0, angle: 0 };
         const py = warpY ? warpY.at(dy) : { pos: dy, z: 0, angle: 0 };
-        if (px.hidden || py.hidden || shown <= 0) continue;
+        if (px.hidden || py.hidden) continue;
 
         const card = pool[i] ?? el.appendChild(Object.assign(document.createElement('div'), { className: 'infinite-grid__card' }));
         pool[i++] = card;
         const cellKey = `${col},${row}`;
         const lift = lifts.get(cellKey) ?? 0;
-        const scale = (1 + lift * (aim.liftScale - 1)) * (0.6 + 0.4 * shown);
+        const scale = (1 + lift * (aim.liftScale - 1));
         // One tilt about a combined axis, so corners don't twist like they
         // would with separate rotateX/rotateY.
         const tilt = Math.hypot(px.angle, py.angle);
@@ -285,7 +267,6 @@ export function mountInfiniteGrid(el, config) {
           (tilt ? `rotate3d(${py.angle}, ${-px.angle}, 0, ${tilt}rad) ` : '') +
           `scale(${scale})`;
         card.style.setProperty('--lift', lift);
-        card.style.opacity = shown;
         card.classList.toggle('is-target', cellKey === target?.key);
         if (cellKey === target?.key) target.element = card;
         card.hidden = false;
@@ -297,36 +278,45 @@ export function mountInfiniteGrid(el, config) {
   };
   let holeRect = { x: 0, y: 0, width: 0, height: 0 };
 
-  // Pick the block of cells big enough for the menu whose centre is nearest
-  // the crosshair, and set up the slide that centres it.
-  function placeHole(pitchX, pitchY, w, h, W, H) {
-    const { width: menuW, height: menuH } = config.home;
-    hole.cols = Math.max(1, Math.ceil((menuW + pitchX - w) / pitchX));
-    hole.rows = Math.max(1, Math.ceil((menuH + pitchY - h) / pitchY));
-    const holeW = hole.cols * pitchX - (pitchX - w);
-    const holeH = hole.rows * pitchY - (pitchY - h);
-    hole.origin = {
-      col: Math.round((W / 2 - offset.x - holeW / 2) / pitchX),
-      row: Math.round((H / 2 - offset.y - holeH / 2) / pitchY),
-    };
-    glide = {
-      from: { ...offset },
-      to: { x: W / 2 - (hole.origin.col * pitchX + holeW / 2), y: H / 2 - (hole.origin.row * pitchY + holeH / 2) },
-      start: performance.now(),
+  // Split the grid at the crosshair and work out how far each side must move
+  // so the menu fits with a normal gap all round. Each side moves only as far
+  // as it needs to; the view itself never moves.
+  function splitAt(pitchX, pitchY, w, h, W, H) {
+    const { width: menuW, height: menuH, split } = config.home;
+    const gapX = pitchX - w;
+    const gapY = pitchY - h;
+    const sx = W / 2 - offset.x; // crosshair in grid space
+    const sy = H / 2 - offset.y;
+    // Nearest card centres either side of the split. With a brick offset, rows
+    // differ, so assume the worst case (a card centred right on the split).
+    const brick = config.grid.rowOffset > 0;
+    const leftC = brick ? sx : Math.floor((sx - w / 2) / pitchX) * pitchX + w / 2;
+    const rightC = brick ? sx : leftC + pitchX;
+    const upC = Math.floor((sy - h / 2) / pitchY) * pitchY + h / 2;
+    const downC = upC + pitchY;
+    const sideways = split !== 'vertical';
+    const upDown = split !== 'horizontal';
+    hole.split = {
+      x: sx,
+      y: sy,
+      left: sideways ? Math.max(0, leftC + w / 2 - (sx - menuW / 2 - gapX)) : 0,
+      right: sideways ? Math.max(0, sx + menuW / 2 + gapX - (rightC - w / 2)) : 0,
+      up: upDown ? Math.max(0, upC + h / 2 - (sy - menuH / 2 - gapY)) : 0,
+      down: upDown ? Math.max(0, sy + menuH / 2 + gapY - (downC - h / 2)) : 0,
     };
   }
+
   tick();
 
   return {
-    // Clear a centred block of cards for the menu, or fill it back in.
+    // Slide the cards out of the way of the menu, or back into place.
     setHole(open) {
       const now = performance.now();
       if (open) {
         const g = config.grid;
         const w = g.cardWidth * g.zoom;
         const h = w / g.aspectRatio;
-        placeHole(w + g.gapX * g.zoom, h + g.gapY * g.zoom, w, h, el.clientWidth, el.clientHeight);
-        glide.start = now;
+        splitAt(w + g.gapX * g.zoom, h + g.gapY * g.zoom, w, h, el.clientWidth, el.clientHeight);
       }
       hole.from = hole.open;
       hole.to = open ? 1 : 0;
