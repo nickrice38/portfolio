@@ -68,6 +68,12 @@ const TIPS = {
   Tighten: 'How much the crosshair closes in when on a card. 1 means no change, lower pulls tighter.',
   'Show name': 'Show the targeted project\'s name under the crosshair, like a nametag.',
   Assist: 'Ready-made aim assist feels, from Off to Lock-on. Pick one, then fine-tune below.',
+  Mode: 'How you aim. Drag: click and drag the grid. Joystick: move the mouse away from the centre to steer. Mouse look: the cursor locks and the mouse turns the view, like a shooter.',
+  'Dead zone': 'The calm circle in the middle. While the mouse is inside it, nothing moves.',
+  'Top speed': 'How fast the grid moves with the mouse at the very edge.',
+  Curve: 'How speed builds up. 1 rises evenly; higher stays slow near the dead zone, then ramps up near the edge.',
+  'Show zone': 'Draws the dead zone as a dashed circle so you can see it while tuning.',
+  Sensitivity: 'How far the view turns for each bit of mouse movement in Mouse look.',
   Stickiness: 'Aim assist slowdown. Movement gets this much stickier while over a card, so it\'s easier to stay on target.',
   Settle: 'When you stop moving, how strongly the nearest card is pulled under the crosshair. 0 turns it off.',
   'Settle delay': 'How long to wait after you stop before settling kicks in, in milliseconds.',
@@ -140,11 +146,12 @@ function load(values) {
   syncWarp();
   syncAim();
   pane.refresh();
+  showModeControls();
   applyEffects(config);
 }
 
 // Card
-const { grid, warp, crosshair, aim, shot, motion, colour } = config;
+const { grid, warp, crosshair, aim, shot, control, motion, colour } = config;
 const card = pane.addFolder({ title: 'Card' });
 card.addBinding(grid, 'cardWidth', { label: 'Width', min: 40, max: 800, step: 1 });
 card
@@ -247,6 +254,26 @@ const shotFolder = pane.addFolder({ title: 'Shot' });
 shotFolder.addBinding(shot, 'recoil', { label: 'Recoil', min: 0, max: 30, step: 1 });
 shotFolder.addBinding(shot, 'delay', { label: 'Zoom delay', min: 0, max: 400, step: 10 });
 shotFolder.addBinding(shot, 'zoomDuration', { label: 'Zoom time', min: 100, max: 1500, step: 10 });
+
+// Control
+const controlFolder = pane.addFolder({ title: 'Control' });
+const modeBinding = controlFolder.addBinding(control, 'mode', {
+  label: 'Mode',
+  options: { Drag: 'drag', Joystick: 'joystick', 'Mouse look': 'look' },
+});
+const joystickBindings = [
+  controlFolder.addBinding(control, 'deadZone', { label: 'Dead zone', min: 0, max: 0.8, step: 0.01 }),
+  controlFolder.addBinding(control, 'maxSpeed', { label: 'Top speed', min: 1, max: 40, step: 0.5 }),
+  controlFolder.addBinding(control, 'curve', { label: 'Curve', min: 1, max: 4, step: 0.1 }),
+  controlFolder.addBinding(control, 'showDeadZone', { label: 'Show zone' }),
+];
+const lookBindings = [controlFolder.addBinding(control, 'lookSensitivity', { label: 'Sensitivity', min: 0.1, max: 4, step: 0.05 })];
+const showModeControls = () => {
+  joystickBindings.forEach((b) => (b.hidden = control.mode !== 'joystick'));
+  lookBindings.forEach((b) => (b.hidden = control.mode !== 'look'));
+};
+modeBinding.on('change', showModeControls);
+showModeControls();
 
 // Motion
 const motionFolder = pane.addFolder({ title: 'Motion' });

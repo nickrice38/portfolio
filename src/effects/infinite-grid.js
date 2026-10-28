@@ -15,12 +15,20 @@ export function mountInfiniteGrid(el, config) {
   let target = null;
   let paused = false;
 
+  let aimAt = null; // mouse position relative to the centre, for joystick mode
+  const locked = () => document.pointerLockElement === el;
+
   const touched = () => (lastInput = performance.now());
   // Aim assist slowdown: input moves the grid less while a card is targeted.
   const sticky = () => (target ? 1 - config.aim.stickiness : 1);
 
   el.addEventListener('pointerdown', (e) => {
     if (paused) return;
+    // Mouse look: every press while locked is a shot, no dragging.
+    if (locked()) {
+      if (target) el.dispatchEvent(new CustomEvent('shoot', { detail: target }));
+      return;
+    }
     el.setPointerCapture(e.pointerId);
     el.classList.add('is-dragging');
     drag = { x: e.clientX, y: e.clientY, travel: 0 };
@@ -29,6 +37,20 @@ export function mountInfiniteGrid(el, config) {
   });
 
   el.addEventListener('pointermove', (e) => {
+    if (locked()) {
+      if (paused) return;
+      const speed = config.control.lookSensitivity * sticky();
+      velocity.x = -e.movementX * speed;
+      velocity.y = -e.movementY * speed;
+      offset.x += velocity.x;
+      offset.y += velocity.y;
+      touched();
+      return;
+    }
+    if (e.pointerType === 'mouse') {
+      const r = el.getBoundingClientRect();
+      aimAt = { x: e.clientX - r.left - r.width / 2, y: e.clientY - r.top - r.height / 2 };
+    }
     if (!drag) return;
     const dx = e.clientX - drag.x;
     const dy = e.clientY - drag.y;
@@ -46,11 +68,16 @@ export function mountInfiniteGrid(el, config) {
     const clicked = e.type === 'pointerup' && drag.travel < 4;
     drag = null;
     el.classList.remove('is-dragging');
-    if (clicked && target) {
+    if (clicked && config.control.mode === 'look' && e.pointerType === 'mouse') {
+      // First click in mouse look mode grabs the pointer instead of shooting.
+      el.requestPointerLock();
+    } else if (clicked && target) {
       velocity.x = velocity.y = 0;
       el.dispatchEvent(new CustomEvent('shoot', { detail: target }));
     }
   };
+  el.addEventListener('pointerleave', () => (aimAt = null));
+  document.addEventListener('pointerlockchange', () => el.classList.toggle('is-locked', locked()));
   el.addEventListener('pointerup', endDrag);
   el.addEventListener('pointercancel', endDrag);
 
@@ -108,6 +135,23 @@ export function mountInfiniteGrid(el, config) {
       velocity.x = (kx / len) * motion.keySpeed * sticky();
       velocity.y = (ky / len) * motion.keySpeed * sticky();
       touched();
+    }
+
+    // Joystick: distance from the centre sets speed, past a dead zone.
+    el.dataset.control = config.control.mode;
+    const radius = Math.min(el.clientWidth, el.clientHeight) / 2;
+    el.classList.toggle('show-dead-zone', config.control.showDeadZone);
+    el.style.setProperty('--dead-zone', `${config.control.deadZone * radius * 2}px`);
+    if (config.control.mode === 'joystick' && aimAt && !drag && !held.size && !paused) {
+      const { deadZone, maxSpeed, curve } = config.control;
+      const dist = Math.min(1, Math.hypot(aimAt.x, aimAt.y) / radius);
+      if (dist > deadZone) {
+        const t = ((dist - deadZone) / (1 - deadZone)) ** curve;
+        const len = Math.hypot(aimAt.x, aimAt.y);
+        velocity.x = (-aimAt.x / len) * maxSpeed * t * sticky();
+        velocity.y = (-aimAt.y / len) * maxSpeed * t * sticky();
+        touched();
+      }
     }
 
     if (!drag) {
@@ -213,6 +257,7 @@ export function mountInfiniteGrid(el, config) {
   return {
     pause: (value) => {
       paused = value;
+      if (value && locked()) document.exitPointerLock();
       held.clear();
       velocity.x = velocity.y = 0;
     },

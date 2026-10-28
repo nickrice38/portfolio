@@ -29,3 +29,42 @@
 .infinite-grid__card.is-target {
   background: var(--aim-target-fill);
 }
+
+/* Control modes. Joystick: plain cursor and an optional dead zone ring.
+   Mouse look: a prompt until the pointer is locked. */
+.infinite-grid[data-control="joystick"] {
+  cursor: default;
+}
+
+.infinite-grid[data-control="joystick"].show-dead-zone::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  z-index: 1;
+  width: var(--dead-zone);
+  height: var(--dead-zone);
+  border: 1px dashed rgb(0 0 0 / 0.25);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+.infinite-grid[data-control="look"]:not(.is-locked)::after {
+  content: "Click to look around · Esc to release";
+  position: absolute;
+  bottom: 24px;
+  left: 50%;
+  z-index: 1;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: #1b1b1b;
+  color: #fff;
+  font: 500 12px/1 "Inter", system-ui, sans-serif;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.infinite-grid.is-locked {
+  cursor: none;
+}

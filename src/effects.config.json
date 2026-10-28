@@ -10,6 +10,14 @@
     "zoom": 1,
     "projectCount": 12
   },
+  "control": {
+    "mode": "drag",
+    "deadZone": 0.25,
+    "maxSpeed": 14,
+    "curve": 2,
+    "showDeadZone": true,
+    "lookSensitivity": 1
+  },
   "motion": {
     "dragSpeed": 1,
     "wheelSpeed": 1,
