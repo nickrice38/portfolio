@@ -21,6 +21,28 @@ const ASPECT_RATIOS = {
 };
 const CUSTOM = 'Custom';
 
+// Plain-language help shown when hovering a control's label, keyed by label.
+const TIPS = {
+  Width: 'How wide each card is, in pixels. Height follows from the ratio.',
+  Ratio: 'The shape of each card. 4:3 is a classic landscape photo; 1:1 is square.',
+  'Custom ratio': 'Fine-tune the shape. Higher is wider and flatter, lower is taller.',
+  Radius: 'How rounded the card corners are. 0 is sharp, higher is softer.',
+  'Link gaps': 'When on, the horizontal and vertical gaps move together.',
+  'Gap X': 'Space between cards side to side.',
+  'Gap Y': 'Space between rows of cards.',
+  'Row offset': 'Slides every other row sideways, like bricks in a wall. 0.5 is half a card.',
+  Zoom: 'Scales the whole grid up or down, gaps and corners included.',
+  'Drag speed': 'How far the grid moves when you drag. 1 follows your mouse exactly.',
+  'Scroll speed': 'How fast the grid moves with a trackpad or scroll wheel.',
+  Inertia: 'How long the grid keeps gliding after you let go. 0 stops instantly.',
+  'Drift X': 'Slow automatic movement sideways when nobody is touching it.',
+  'Drift Y': 'Slow automatic movement up or down when nobody is touching it.',
+  Canvas: 'The background colour behind the cards.',
+  Card: 'The fill colour of every card.',
+  Name: 'Type a name, then save the current settings as a preset.',
+  Load: 'Switch to a saved preset to compare directions.',
+};
+
 const clone = (o) => structuredClone(o);
 const config = clone(saved);
 const presets = clone(savedPresets);
@@ -153,3 +175,16 @@ copyBtn.on('click', async () => {
   flash(copyBtn, 'Copied ✓');
 });
 actions.addButton({ title: 'Reset to saved' }).on('click', () => load(saved));
+
+// Tooltips: one floating element, placed left of the panel beside the hovered row.
+const tooltip = document.body.appendChild(Object.assign(document.createElement('div'), { className: 'panel-tooltip' }));
+document.querySelector('.panel').addEventListener('mouseover', (e) => {
+  const label = e.target.closest('.tp-lblv_l');
+  const text = label && TIPS[label.textContent.trim()];
+  if (!text) return tooltip.classList.remove('is-visible');
+  const row = label.getBoundingClientRect();
+  tooltip.textContent = text;
+  tooltip.style.top = `${row.top + row.height / 2}px`;
+  tooltip.classList.add('is-visible');
+});
+document.querySelector('.panel').addEventListener('mouseleave', () => tooltip.classList.remove('is-visible'));
