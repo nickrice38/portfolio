@@ -3,7 +3,11 @@ import saved from '../src/effects.config.json';
 import savedPresets from '../src/effects.presets.json';
 import { applyEffects } from '../src/effects/apply.js';
 import { mountInfiniteGrid } from '../src/effects/infinite-grid.js';
+import { mountCrosshair } from '../src/effects/crosshair.js';
+import { mountShot } from '../src/effects/shot.js';
 import '../src/effects/infinite-grid.css';
+import '../src/effects/crosshair.css';
+import '../src/effects/shot.css';
 import './panel.css';
 
 const ASPECT_RATIOS = {
@@ -44,6 +48,22 @@ const TIPS = {
   Warp: 'Bends the grid. Positive curves the edges towards you, like the inside of a tube. Negative bulges it away, like a drum.',
   Axis: 'Which way it bends: side to side, top to bottom, or both at once for a bowl or globe.',
   Depth: 'How strong the 3D perspective feels. Lower is more dramatic, higher is flatter.',
+  'Crosshair': 'The crosshair shape: a classic cross, cross with a centre dot, just a dot, or a ring.',
+  Size: 'Overall size of the crosshair, in pixels.',
+  Gap: 'Empty space in the middle of the cross.',
+  Thickness: 'Line weight of the crosshair.',
+  Colour: 'Crosshair colour when nothing is targeted.',
+  'On target': 'Crosshair and hitmarker colour when it\'s over a card.',
+  Tighten: 'How much the crosshair closes in when on a card. 1 means no change, lower pulls tighter.',
+  'Show name': 'Show the targeted project\'s name under the crosshair, like a nametag.',
+  Stickiness: 'Aim assist slowdown. Movement gets this much stickier while over a card, so it\'s easier to stay on target.',
+  Settle: 'When you stop moving, how strongly the nearest card is pulled under the crosshair. 0 turns it off.',
+  'Settle delay': 'How long to wait after you stop before settling kicks in, in milliseconds.',
+  Lift: 'How much the targeted card grows. 1 is no lift.',
+  'Target fill': 'The targeted card\'s colour.',
+  Recoil: 'How far the grid kicks when you shoot, in pixels. 0 for no kick.',
+  'Zoom delay': 'Pause after the shot before the card zooms open, in milliseconds. Lets the hitmarker land.',
+  'Zoom time': 'How long the card takes to grow into the project view, in milliseconds.',
   'Link gaps': 'When on, the horizontal and vertical gaps move together.',
   'Gap X': 'Space between cards side to side.',
   'Gap Y': 'Space between rows of cards.',
@@ -66,7 +86,10 @@ const config = clone(saved);
 const presets = clone(savedPresets);
 
 applyEffects(config);
-mountInfiniteGrid(document.querySelector('.canvas'), config);
+const canvas = document.querySelector('.canvas');
+const gridApi = mountInfiniteGrid(canvas, config);
+mountCrosshair(canvas, gridApi, config);
+mountShot(canvas, gridApi, config);
 
 const pane = new Pane({ container: document.querySelector('.panel') });
 
@@ -103,7 +126,7 @@ function load(values) {
 }
 
 // Card
-const { grid, warp, motion, colour } = config;
+const { grid, warp, crosshair, aim, shot, motion, colour } = config;
 const card = pane.addFolder({ title: 'Card' });
 card.addBinding(grid, 'cardWidth', { label: 'Width', min: 40, max: 800, step: 1 });
 card
@@ -163,6 +186,34 @@ warpFolder
   .addBinding(warp, 'axis', { label: 'Axis', options: { Horizontal: 'horizontal', Vertical: 'vertical', Both: 'both' } })
   .on('change', resyncWarp);
 warpFolder.addBinding(warp, 'perspective', { label: 'Depth', min: 300, max: 3000, step: 10 });
+
+// Crosshair
+const crossFolder = pane.addFolder({ title: 'Crosshair' });
+crossFolder.addBinding(crosshair, 'style', {
+  label: 'Crosshair',
+  options: { Cross: 'cross', 'Cross + dot': 'crossDot', Dot: 'dot', Ring: 'ring' },
+});
+crossFolder.addBinding(crosshair, 'size', { label: 'Size', min: 6, max: 80, step: 1 });
+crossFolder.addBinding(crosshair, 'gap', { label: 'Gap', min: 0, max: 30, step: 1 });
+crossFolder.addBinding(crosshair, 'thickness', { label: 'Thickness', min: 1, max: 6, step: 0.5 });
+crossFolder.addBinding(crosshair, 'colour', { label: 'Colour' });
+crossFolder.addBinding(crosshair, 'targetColour', { label: 'On target' });
+crossFolder.addBinding(crosshair, 'targetTighten', { label: 'Tighten', min: 0.2, max: 1.5, step: 0.01 });
+crossFolder.addBinding(crosshair, 'showLabel', { label: 'Show name' });
+
+// Aim assist
+const aimFolder = pane.addFolder({ title: 'Aim assist' });
+aimFolder.addBinding(aim, 'stickiness', { label: 'Stickiness', min: 0, max: 0.9, step: 0.01 });
+aimFolder.addBinding(aim, 'settle', { label: 'Settle', min: 0, max: 0.4, step: 0.01 });
+aimFolder.addBinding(aim, 'settleDelay', { label: 'Settle delay', min: 0, max: 1000, step: 10 });
+aimFolder.addBinding(aim, 'liftScale', { label: 'Lift', min: 1, max: 1.3, step: 0.01 });
+aimFolder.addBinding(aim, 'targetFill', { label: 'Target fill' });
+
+// Shot
+const shotFolder = pane.addFolder({ title: 'Shot' });
+shotFolder.addBinding(shot, 'recoil', { label: 'Recoil', min: 0, max: 30, step: 1 });
+shotFolder.addBinding(shot, 'delay', { label: 'Zoom delay', min: 0, max: 400, step: 10 });
+shotFolder.addBinding(shot, 'zoomDuration', { label: 'Zoom time', min: 100, max: 1500, step: 10 });
 
 // Motion
 const motionFolder = pane.addFolder({ title: 'Motion' });

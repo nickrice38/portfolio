@@ -20,3 +20,12 @@
   border-radius: calc(var(--grid-corner-radius) * var(--grid-zoom) * 1px);
   will-change: transform;
 }
+
+/* Targeted card: a soft shadow that grows with --lift (0..1). */
+.infinite-grid__card {
+  box-shadow: 0 calc(var(--lift, 0) * 12px) calc(var(--lift, 0) * 32px) rgb(0 0 0 / calc(var(--lift, 0) * 0.18));
+}
+
+.infinite-grid__card.is-target {
+  background: var(--aim-target-fill);
+}

@@ -7,7 +7,8 @@
     "gapY": 24,
     "cornerRadius": 8,
     "rowOffset": 0,
-    "zoom": 1
+    "zoom": 1,
+    "projectCount": 12
   },
   "motion": {
     "dragSpeed": 1,
@@ -21,6 +22,28 @@
     "amount": 0,
     "axis": "horizontal",
     "perspective": 1200
+  },
+  "crosshair": {
+    "style": "cross",
+    "size": 22,
+    "gap": 5,
+    "thickness": 2,
+    "colour": "#1b1b1b",
+    "targetColour": "#e5484d",
+    "targetTighten": 0.6,
+    "showLabel": true
+  },
+  "aim": {
+    "stickiness": 0.45,
+    "settle": 0.12,
+    "settleDelay": 160,
+    "liftScale": 1.04,
+    "targetFill": "#cfcfcb"
+  },
+  "shot": {
+    "recoil": 6,
+    "delay": 90,
+    "zoomDuration": 520
   },
   "colour": {
     "background": "#f4f4f2",

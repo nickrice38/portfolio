@@ -1,33 +1,55 @@
 // An endless, pannable grid of cards. Only the cards in view exist in the DOM;
 // they are pooled and repositioned as the grid moves.
 // Reads `config` every frame, so live edits from the playground apply immediately.
+//
+// The card under the centre of the screen is the target (exposed as `.target`).
+// The grid fires a `shoot` event on `el` when the target is clicked.
 export function mountInfiniteGrid(el, config) {
   el.classList.add('infinite-grid');
   const pool = [];
   const offset = { x: 0, y: 0 };
   const velocity = { x: 0, y: 0 };
+  const lifts = new Map(); // "col,row" -> 0..1, eased per frame
   let drag = null;
+  let lastInput = 0;
+  let target = null;
+  let paused = false;
+
+  const touched = () => (lastInput = performance.now());
+  // Aim assist slowdown: input moves the grid less while a card is targeted.
+  const sticky = () => (target ? 1 - config.aim.stickiness : 1);
 
   el.addEventListener('pointerdown', (e) => {
+    if (paused) return;
     el.setPointerCapture(e.pointerId);
     el.classList.add('is-dragging');
-    drag = { x: e.clientX, y: e.clientY };
+    drag = { x: e.clientX, y: e.clientY, travel: 0 };
     velocity.x = velocity.y = 0;
+    touched();
   });
 
   el.addEventListener('pointermove', (e) => {
     if (!drag) return;
-    const speed = config.motion.dragSpeed;
-    velocity.x = (e.clientX - drag.x) * speed;
-    velocity.y = (e.clientY - drag.y) * speed;
+    const dx = e.clientX - drag.x;
+    const dy = e.clientY - drag.y;
+    const speed = config.motion.dragSpeed * sticky();
+    velocity.x = dx * speed;
+    velocity.y = dy * speed;
     offset.x += velocity.x;
     offset.y += velocity.y;
-    drag = { x: e.clientX, y: e.clientY };
+    drag = { x: e.clientX, y: e.clientY, travel: drag.travel + Math.hypot(dx, dy) };
+    touched();
   });
 
-  const endDrag = () => {
+  const endDrag = (e) => {
+    if (!drag) return;
+    const clicked = e.type === 'pointerup' && drag.travel < 4;
     drag = null;
     el.classList.remove('is-dragging');
+    if (clicked && target) {
+      velocity.x = velocity.y = 0;
+      el.dispatchEvent(new CustomEvent('shoot', { detail: target }));
+    }
   };
   el.addEventListener('pointerup', endDrag);
   el.addEventListener('pointercancel', endDrag);
@@ -36,10 +58,12 @@ export function mountInfiniteGrid(el, config) {
     'wheel',
     (e) => {
       e.preventDefault();
-      const speed = config.motion.wheelSpeed;
+      if (paused) return;
+      const speed = config.motion.wheelSpeed * sticky();
       offset.x -= e.deltaX * speed;
       offset.y -= e.deltaY * speed;
       velocity.x = velocity.y = 0;
+      touched();
     },
     { passive: false },
   );
@@ -55,7 +79,13 @@ export function mountInfiniteGrid(el, config) {
   const typing = (e) => e.target.closest?.('input, textarea, select, [contenteditable]');
   addEventListener('keydown', (e) => {
     const key = e.key.toLowerCase();
-    if (!KEYS[key] || typing(e) || e.metaKey || e.ctrlKey || e.altKey) return;
+    if (paused || typing(e) || e.metaKey || e.ctrlKey || e.altKey) return;
+    if ((key === ' ' || key === 'enter') && target) {
+      e.preventDefault();
+      el.dispatchEvent(new CustomEvent('shoot', { detail: target }));
+      return;
+    }
+    if (!KEYS[key]) return;
     e.preventDefault();
     held.add(key);
   });
@@ -65,9 +95,9 @@ export function mountInfiniteGrid(el, config) {
   const reduced = matchMedia('(prefers-reduced-motion: reduce)');
 
   const tick = () => {
-    const { grid, motion } = config;
+    const { grid, motion, aim } = config;
 
-    if (held.size) {
+    if (held.size && !paused) {
       let kx = 0;
       let ky = 0;
       for (const key of held) {
@@ -75,8 +105,9 @@ export function mountInfiniteGrid(el, config) {
         ky += KEYS[key][1];
       }
       const len = Math.hypot(kx, ky) || 1; // diagonals aren't faster
-      velocity.x = (kx / len) * motion.keySpeed;
-      velocity.y = (ky / len) * motion.keySpeed;
+      velocity.x = (kx / len) * motion.keySpeed * sticky();
+      velocity.y = (ky / len) * motion.keySpeed * sticky();
+      touched();
     }
 
     if (!drag) {
@@ -87,7 +118,7 @@ export function mountInfiniteGrid(el, config) {
       }
       offset.x += velocity.x;
       offset.y += velocity.y;
-      if (!reduced.matches) {
+      if (!reduced.matches && !paused) {
         offset.x += motion.driftX;
         offset.y += motion.driftY;
       }
@@ -97,9 +128,36 @@ export function mountInfiniteGrid(el, config) {
     const h = w / grid.aspectRatio;
     const pitchX = w + grid.gapX * grid.zoom;
     const pitchY = h + grid.gapY * grid.zoom;
-
     const W = el.clientWidth;
     const H = el.clientHeight;
+    const shiftOf = (row) => (row & 1) * grid.rowOffset * pitchX;
+
+    // Nearest card to the centre of the screen, in flat grid space.
+    const nearRow = Math.round((H / 2 - offset.y - h / 2) / pitchY);
+    const nearCol = Math.round((W / 2 - offset.x - shiftOf(nearRow) - w / 2) / pitchX);
+    const nearDx = nearCol * pitchX + shiftOf(nearRow) + offset.x + w / 2 - W / 2;
+    const nearDy = nearRow * pitchY + offset.y + h / 2 - H / 2;
+    const onCard = Math.abs(nearDx) <= w / 2 && Math.abs(nearDy) <= h / 2;
+
+    // Settle: once things are still, ease the nearest card under the crosshair.
+    const still = !drag && !held.size && Math.hypot(velocity.x, velocity.y) < 0.5;
+    if (still && !paused && aim.settle > 0 && performance.now() - lastInput > aim.settleDelay) {
+      offset.x -= nearDx * aim.settle;
+      offset.y -= nearDy * aim.settle;
+      velocity.x = velocity.y = 0;
+    }
+
+    const key = onCard ? `${nearCol},${nearRow}` : null;
+    if (key !== target?.key) {
+      target = key && { key, col: nearCol, row: nearRow, project: projectAt(nearCol, nearRow, grid.projectCount) };
+    }
+    if (target) lifts.set(target.key, lifts.get(target.key) ?? 0);
+    for (const [k, v] of lifts) {
+      const next = v + ((k === target?.key ? 1 : 0) - v) * (reduced.matches ? 1 : 0.2);
+      if (next < 0.001 && k !== target?.key) lifts.delete(k);
+      else lifts.set(k, next);
+    }
+
     const { amount, axis, perspective } = config.warp;
     const warpX = axis !== 'vertical' ? bend(W / 2, amount) : null;
     const warpY = axis !== 'horizontal' ? bend(H / 2, amount) : null;
@@ -117,7 +175,7 @@ export function mountInfiniteGrid(el, config) {
     let i = 0;
     for (let row = row0; row <= row1; row++) {
       // Every other row shifts sideways by rowOffset of a cell, brick-style.
-      const shift = (row & 1) * grid.rowOffset * pitchX;
+      const shift = shiftOf(row);
       for (let col = col0; col <= col1; col++) {
         // Card centre relative to the viewport centre, before warping.
         const dx = col * pitchX + shift + offset.x + w / 2 - W / 2;
@@ -128,14 +186,21 @@ export function mountInfiniteGrid(el, config) {
 
         const card = pool[i] ?? el.appendChild(Object.assign(document.createElement('div'), { className: 'infinite-grid__card' }));
         pool[i++] = card;
-        card.style.width = `${w}px`;
-        card.style.height = `${h}px`;
+        const cellKey = `${col},${row}`;
+        const lift = lifts.get(cellKey) ?? 0;
+        const scale = 1 + lift * (aim.liftScale - 1);
         // One tilt about a combined axis, so corners don't twist like they
         // would with separate rotateX/rotateY.
         const tilt = Math.hypot(px.angle, py.angle);
+        card.style.width = `${w}px`;
+        card.style.height = `${h}px`;
         card.style.transform =
           `translate3d(${W / 2 + px.pos - w / 2}px, ${H / 2 + py.pos - h / 2}px, ${px.z + py.z}px) ` +
-          (tilt ? `rotate3d(${py.angle}, ${-px.angle}, 0, ${tilt}rad)` : '');
+          (tilt ? `rotate3d(${py.angle}, ${-px.angle}, 0, ${tilt}rad) ` : '') +
+          `scale(${scale})`;
+        card.style.setProperty('--lift', lift);
+        card.classList.toggle('is-target', cellKey === target?.key);
+        if (cellKey === target?.key) target.element = card;
         card.hidden = false;
       }
     }
@@ -144,6 +209,23 @@ export function mountInfiniteGrid(el, config) {
     requestAnimationFrame(tick);
   };
   tick();
+
+  return {
+    pause: (value) => {
+      paused = value;
+      held.clear();
+      velocity.x = velocity.y = 0;
+    },
+    get target() {
+      return target;
+    },
+  };
+}
+
+// Projects repeat across the endless grid in a scattered pattern, so
+// neighbouring cards are never the same project. Returns 1..count.
+function projectAt(col, row, count) {
+  return ((((col * 7 + row * 3) % count) + count) % count) + 1;
 }
 
 // Wraps a flat line of length 2*half onto a circle. amount > 0 bends it towards
@@ -153,8 +235,8 @@ function bend(half, amount) {
   if (Math.abs(amount) < 0.001) return null;
   const sign = Math.sign(amount);
   const radius = half / (Math.abs(amount) * (Math.PI / 2));
-  // How much flat distance it takes to reach the screen edge (or the side of the circle).
   const limit = Math.PI * 0.45; // past this, cards are near edge-on slivers
+  // How much flat distance it takes to reach the screen edge (or the side of the circle).
   const span = radius * Math.min(limit, Math.asin(Math.min(1, half / radius)));
   return {
     span,

@@ -1,0 +1,107 @@
+.crosshair {
+  --k: 1; /* gap multiplier, tightens on target */
+  --c: var(--crosshair-colour);
+  position: fixed;
+  z-index: 10;
+  width: 0;
+  height: 0;
+  color: var(--c);
+  pointer-events: none;
+}
+
+.crosshair.is-on-target {
+  --k: var(--crosshair-target-tighten);
+  --c: var(--crosshair-target-colour);
+}
+
+.crosshair > * {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transition: transform 140ms ease-out, opacity 140ms ease-out, background-color 140ms ease-out, border-color 140ms ease-out;
+}
+
+/* Arms start at the centre, rotate, then step out by the gap. */
+.crosshair__arm,
+.crosshair__hit {
+  width: calc(var(--crosshair-thickness) * 1px);
+  height: calc((var(--crosshair-size) / 2 - var(--crosshair-gap)) * 1px);
+  background: currentColor;
+  transform-origin: 0 0;
+  transform: rotate(var(--r)) translate(-50%, calc(var(--crosshair-gap) * var(--k) * 1px));
+}
+
+.crosshair__dot {
+  width: calc(var(--crosshair-thickness) * 2px);
+  height: calc(var(--crosshair-thickness) * 2px);
+  border-radius: 50%;
+  background: currentColor;
+  transform: translate(-50%, -50%);
+}
+
+.crosshair__ring {
+  width: calc(var(--crosshair-size) * var(--k) * 1px);
+  height: calc(var(--crosshair-size) * var(--k) * 1px);
+  border: calc(var(--crosshair-thickness) * 1px) solid currentColor;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  box-sizing: border-box;
+}
+
+/* Styles: which parts show. */
+.crosshair__arm,
+.crosshair__dot,
+.crosshair__ring {
+  display: none;
+}
+.crosshair[data-style="cross"] .crosshair__arm,
+.crosshair[data-style="crossDot"] .crosshair__arm,
+.crosshair[data-style="crossDot"] .crosshair__dot,
+.crosshair[data-style="dot"] .crosshair__dot,
+.crosshair[data-style="ring"] .crosshair__ring,
+.crosshair[data-style="ring"] .crosshair__dot {
+  display: block;
+}
+
+.crosshair__label {
+  top: calc(var(--crosshair-size) * 0.5px + 14px);
+  font: 500 11px/1 "Inter", system-ui, sans-serif;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  opacity: 0;
+  transform: translate(-50%, -4px);
+}
+
+.crosshair.has-label.is-on-target .crosshair__label {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+/* Hitmarker: diagonal ticks that pop out and fade. */
+.crosshair__hit {
+  height: calc(var(--crosshair-size) * 0.35px);
+  background: var(--crosshair-target-colour);
+  opacity: 0;
+}
+
+.crosshair.is-hit .crosshair__hit {
+  animation: crosshair-hit 260ms ease-out;
+}
+
+@keyframes crosshair-hit {
+  0% {
+    opacity: 1;
+    transform: rotate(var(--r)) translate(-50%, calc(var(--crosshair-size) * 0.25px));
+  }
+  100% {
+    opacity: 0;
+    transform: rotate(var(--r)) translate(-50%, calc(var(--crosshair-size) * 0.55px));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .crosshair > * {
+    transition: none;
+  }
+}
