@@ -85,11 +85,8 @@ const TIPS = {
   Recoil: 'How far the grid kicks when you shoot, in pixels. 0 for no kick.',
   'Zoom delay': 'Pause after the shot before the card zooms open, in milliseconds. Lets the hitmarker land.',
   'Zoom time': 'How long the card takes to grow into the project view, in milliseconds.',
-  'Menu width': 'Width of the space opened for the menu, in pixels. It always sits dead centre.',
-  'Menu height': 'Height of the space opened for the menu, in pixels.',
-  Clear: 'Which cards fade out rather than move. Higher fades more of the nearby cards; lower pushes more of them aside.',
-  Push: 'How hard the surrounding cards are shoved out of the way. 1 is just enough to clear the menu; higher leaves extra breathing room.',
-  Falloff: 'How far the push reaches. Low only nudges cards right next to the menu; high moves the whole screen apart.',
+  'Menu width': 'Width the menu needs, in pixels. Enough whole cards are cleared to fit it, always dead centre.',
+  'Menu height': 'Height the menu needs, in pixels. Enough whole rows are cleared to fit it.',
   Transition: 'How long the cards take to clear out or fill back in, in milliseconds.',
   Stagger: 'How spread out the card animation is. 0 moves them all together; higher ripples from the middle outwards.',
   'Link gaps': 'When on, the horizontal and vertical gaps move together.',
@@ -204,9 +201,6 @@ layout.addBinding(grid, 'zoom', { label: 'Zoom', min: 0.25, max: 3, step: 0.01 }
 const homeFolder = pane.addFolder({ title: 'Menu' });
 homeFolder.addBinding(home, 'width', { label: 'Menu width', min: 200, max: 1000, step: 10 });
 homeFolder.addBinding(home, 'height', { label: 'Menu height', min: 150, max: 800, step: 10 });
-homeFolder.addBinding(home, 'clear', { label: 'Clear', min: 0.2, max: 0.95, step: 0.01 });
-homeFolder.addBinding(home, 'push', { label: 'Push', min: 1, max: 3, step: 0.05 });
-homeFolder.addBinding(home, 'falloff', { label: 'Falloff', min: 0.3, max: 5, step: 0.05 });
 homeFolder.addBinding(home, 'transition', { label: 'Transition', min: 200, max: 2000, step: 10 });
 homeFolder.addBinding(home, 'stagger', { label: 'Stagger', min: 0, max: 2, step: 0.05 });
 homeFolder.addButton({ title: 'Open menu (Esc)' }).on('click', () => menu.show());

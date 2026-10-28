@@ -13,9 +13,6 @@
   "home": {
     "width": 480,
     "height": 380,
-    "clear": 0.6,
-    "push": 1,
-    "falloff": 1.4,
     "transition": 700,
     "stagger": 0.6
   },
