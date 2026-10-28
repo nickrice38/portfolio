@@ -25,6 +25,17 @@ const ASPECT_RATIOS = {
 };
 const CUSTOM = 'Custom';
 
+// Aim assist presets. Target fill is left alone so colours stay your own.
+const AIM_ASSISTS = {
+  Off: { stickiness: 0, settle: 0, settleDelay: 0, liftScale: 1 },
+  'Free look': { stickiness: 0.15, settle: 0, settleDelay: 0, liftScale: 1.02 },
+  Gentle: { stickiness: 0.25, settle: 0.06, settleDelay: 300, liftScale: 1.03 },
+  Console: { stickiness: 0.45, settle: 0.12, settleDelay: 160, liftScale: 1.04 },
+  Magnetic: { stickiness: 0.65, settle: 0.22, settleDelay: 60, liftScale: 1.06 },
+  'Lock-on': { stickiness: 0.85, settle: 0.4, settleDelay: 0, liftScale: 1.1 },
+  'Slow drift': { stickiness: 0.3, settle: 0.03, settleDelay: 500, liftScale: 1.04 },
+};
+
 const WARPS = {
   Flat: { amount: 0, axis: 'horizontal' },
   'Subtle curve': { amount: 0.25, axis: 'horizontal' },
@@ -56,6 +67,7 @@ const TIPS = {
   'On target': 'Crosshair and hitmarker colour when it\'s over a card.',
   Tighten: 'How much the crosshair closes in when on a card. 1 means no change, lower pulls tighter.',
   'Show name': 'Show the targeted project\'s name under the crosshair, like a nametag.',
+  Assist: 'Ready-made aim assist feels, from Off to Lock-on. Pick one, then fine-tune below.',
   Stickiness: 'Aim assist slowdown. Movement gets this much stickier while over a card, so it\'s easier to stay on target.',
   Settle: 'When you stop moving, how strongly the nearest card is pulled under the crosshair. 0 turns it off.',
   'Settle delay': 'How long to wait after you stop before settling kicks in, in milliseconds.',
@@ -105,7 +117,7 @@ function flash(button, text) {
 }
 
 // UI-only state that maps onto config values.
-const ui = { ratio: CUSTOM, warp: CUSTOM, presetName: '', preset: '' };
+const ui = { ratio: CUSTOM, warp: CUSTOM, aim: CUSTOM, presetName: '', preset: '' };
 const syncRatio = () => {
   const match = Object.entries(ASPECT_RATIOS).find(([, r]) => Math.abs(r - config.grid.aspectRatio) < 0.002);
   ui.ratio = match ? match[0] : CUSTOM;
@@ -116,11 +128,17 @@ const syncWarp = () => {
   ui.warp = match ? match[0] : CUSTOM;
 };
 syncWarp();
+const syncAim = () => {
+  const match = Object.entries(AIM_ASSISTS).find(([, a]) => Object.entries(a).every(([k, v]) => config.aim[k] === v));
+  ui.aim = match ? match[0] : CUSTOM;
+};
+syncAim();
 
 function load(values) {
   for (const group of Object.keys(config)) Object.assign(config[group], values[group]);
   syncRatio();
   syncWarp();
+  syncAim();
   pane.refresh();
   applyEffects(config);
 }
@@ -203,10 +221,25 @@ crossFolder.addBinding(crosshair, 'showLabel', { label: 'Show name' });
 
 // Aim assist
 const aimFolder = pane.addFolder({ title: 'Aim assist' });
-aimFolder.addBinding(aim, 'stickiness', { label: 'Stickiness', min: 0, max: 0.9, step: 0.01 });
-aimFolder.addBinding(aim, 'settle', { label: 'Settle', min: 0, max: 0.4, step: 0.01 });
-aimFolder.addBinding(aim, 'settleDelay', { label: 'Settle delay', min: 0, max: 1000, step: 10 });
-aimFolder.addBinding(aim, 'liftScale', { label: 'Lift', min: 1, max: 1.3, step: 0.01 });
+aimFolder
+  .addBinding(ui, 'aim', {
+    label: 'Assist',
+    options: { ...Object.fromEntries(Object.keys(AIM_ASSISTS).map((k) => [k, k])), [CUSTOM]: CUSTOM },
+  })
+  .on('change', ({ value }) => {
+    if (value === CUSTOM) return;
+    Object.assign(aim, AIM_ASSISTS[value]);
+    pane.refresh();
+  });
+const resyncAim = () => {
+  const before = ui.aim;
+  syncAim();
+  if (ui.aim !== before) pane.refresh();
+};
+aimFolder.addBinding(aim, 'stickiness', { label: 'Stickiness', min: 0, max: 0.9, step: 0.01 }).on('change', resyncAim);
+aimFolder.addBinding(aim, 'settle', { label: 'Settle', min: 0, max: 0.4, step: 0.01 }).on('change', resyncAim);
+aimFolder.addBinding(aim, 'settleDelay', { label: 'Settle delay', min: 0, max: 1000, step: 10 }).on('change', resyncAim);
+aimFolder.addBinding(aim, 'liftScale', { label: 'Lift', min: 1, max: 1.3, step: 0.01 }).on('change', resyncAim);
 aimFolder.addBinding(aim, 'targetFill', { label: 'Target fill' });
 
 // Shot
