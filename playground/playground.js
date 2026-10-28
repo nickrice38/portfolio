@@ -21,12 +21,29 @@ const ASPECT_RATIOS = {
 };
 const CUSTOM = 'Custom';
 
+const WARPS = {
+  Flat: { amount: 0, axis: 'horizontal' },
+  'Subtle curve': { amount: 0.25, axis: 'horizontal' },
+  'Cylinder': { amount: 0.55, axis: 'horizontal' },
+  'Deep cylinder': { amount: 0.9, axis: 'horizontal' },
+  'Vertical tube': { amount: 0.6, axis: 'vertical' },
+  Bowl: { amount: 0.5, axis: 'both' },
+  Tunnel: { amount: 0.9, axis: 'both' },
+  'Subtle bulge': { amount: -0.25, axis: 'horizontal' },
+  Drum: { amount: -0.6, axis: 'horizontal' },
+  Globe: { amount: -0.6, axis: 'both' },
+};
+
 // Plain-language help shown when hovering a control's label, keyed by label.
 const TIPS = {
   Width: 'How wide each card is, in pixels. Height follows from the ratio.',
   Ratio: 'The shape of each card. 4:3 is a classic landscape photo; 1:1 is square.',
   'Custom ratio': 'Fine-tune the shape. Higher is wider and flatter, lower is taller.',
   Radius: 'How rounded the card corners are. 0 is sharp, higher is softer.',
+  Style: 'Quick starting points for the warp. Pick one, then fine-tune below.',
+  Warp: 'Bends the grid. Positive curves the edges towards you, like the inside of a tube. Negative bulges it away, like a drum.',
+  Axis: 'Which way it bends: side to side, top to bottom, or both at once for a bowl or globe.',
+  Depth: 'How strong the 3D perspective feels. Lower is more dramatic, higher is flatter.',
   'Link gaps': 'When on, the horizontal and vertical gaps move together.',
   'Gap X': 'Space between cards side to side.',
   'Gap Y': 'Space between rows of cards.',
@@ -64,22 +81,28 @@ function flash(button, text) {
 }
 
 // UI-only state that maps onto config values.
-const ui = { ratio: CUSTOM, presetName: '', preset: '' };
+const ui = { ratio: CUSTOM, warp: CUSTOM, presetName: '', preset: '' };
 const syncRatio = () => {
   const match = Object.entries(ASPECT_RATIOS).find(([, r]) => Math.abs(r - config.grid.aspectRatio) < 0.002);
   ui.ratio = match ? match[0] : CUSTOM;
 };
 syncRatio();
+const syncWarp = () => {
+  const match = Object.entries(WARPS).find(([, w]) => w.amount === config.warp.amount && w.axis === config.warp.axis);
+  ui.warp = match ? match[0] : CUSTOM;
+};
+syncWarp();
 
 function load(values) {
   for (const group of Object.keys(config)) Object.assign(config[group], values[group]);
   syncRatio();
+  syncWarp();
   pane.refresh();
   applyEffects(config);
 }
 
 // Card
-const { grid, motion, colour } = config;
+const { grid, warp, motion, colour } = config;
 const card = pane.addFolder({ title: 'Card' });
 card.addBinding(grid, 'cardWidth', { label: 'Width', min: 40, max: 800, step: 1 });
 card
@@ -116,6 +139,29 @@ gapX.on('change', linkFrom('gapX', 'gapY'));
 gapY.on('change', linkFrom('gapY', 'gapX'));
 layout.addBinding(grid, 'rowOffset', { label: 'Row offset', min: 0, max: 1, step: 0.01 });
 layout.addBinding(grid, 'zoom', { label: 'Zoom', min: 0.25, max: 3, step: 0.01 });
+
+// Warp
+const warpFolder = pane.addFolder({ title: 'Warp' });
+warpFolder
+  .addBinding(ui, 'warp', {
+    label: 'Style',
+    options: { ...Object.fromEntries(Object.keys(WARPS).map((k) => [k, k])), [CUSTOM]: CUSTOM },
+  })
+  .on('change', ({ value }) => {
+    if (value === CUSTOM) return;
+    Object.assign(warp, WARPS[value]);
+    pane.refresh();
+  });
+const resyncWarp = () => {
+  const before = ui.warp;
+  syncWarp();
+  if (ui.warp !== before) pane.refresh();
+};
+warpFolder.addBinding(warp, 'amount', { label: 'Warp', min: -1, max: 1, step: 0.01 }).on('change', resyncWarp);
+warpFolder
+  .addBinding(warp, 'axis', { label: 'Axis', options: { Horizontal: 'horizontal', Vertical: 'vertical', Both: 'both' } })
+  .on('change', resyncWarp);
+warpFolder.addBinding(warp, 'perspective', { label: 'Depth', min: 300, max: 3000, step: 10 });
 
 // Motion
 const motionFolder = pane.addFolder({ title: 'Motion' });

@@ -16,6 +16,11 @@
     "driftX": 0,
     "driftY": 0
   },
+  "warp": {
+    "amount": 0,
+    "axis": "horizontal",
+    "perspective": 1200
+  },
   "colour": {
     "background": "#f4f4f2",
     "card": "#d9d9d6"

@@ -66,22 +66,44 @@ export function mountInfiniteGrid(el, config) {
     const pitchX = w + grid.gapX * grid.zoom;
     const pitchY = h + grid.gapY * grid.zoom;
 
-    // Visible cell range, padded by one so cards never pop in at the edges.
-    const col0 = Math.floor(-offset.x / pitchX) - 1;
-    const col1 = Math.ceil((el.clientWidth - offset.x) / pitchX);
-    const row0 = Math.floor(-offset.y / pitchY) - 1;
-    const row1 = Math.ceil((el.clientHeight - offset.y) / pitchY);
+    const W = el.clientWidth;
+    const H = el.clientHeight;
+    const { amount, axis, perspective } = config.warp;
+    const warpX = axis !== 'vertical' ? bend(W / 2, amount) : null;
+    const warpY = axis !== 'horizontal' ? bend(H / 2, amount) : null;
+    el.style.perspective = `${perspective}px`;
+
+    // Visible cell range in flat grid space, padded by one so cards never pop
+    // in at the edges. A warp squeezes the edges, so more of the grid fits.
+    const spanX = warpX?.span ?? W / 2;
+    const spanY = warpY?.span ?? H / 2;
+    const col0 = Math.floor((W / 2 - spanX - offset.x) / pitchX) - 1;
+    const col1 = Math.ceil((W / 2 + spanX - offset.x) / pitchX);
+    const row0 = Math.floor((H / 2 - spanY - offset.y) / pitchY) - 1;
+    const row1 = Math.ceil((H / 2 + spanY - offset.y) / pitchY);
 
     let i = 0;
     for (let row = row0; row <= row1; row++) {
       // Every other row shifts sideways by rowOffset of a cell, brick-style.
       const shift = (row & 1) * grid.rowOffset * pitchX;
       for (let col = col0; col <= col1; col++) {
+        // Card centre relative to the viewport centre, before warping.
+        const dx = col * pitchX + shift + offset.x + w / 2 - W / 2;
+        const dy = row * pitchY + offset.y + h / 2 - H / 2;
+        const px = warpX ? warpX.at(dx) : { pos: dx, z: 0, angle: 0 };
+        const py = warpY ? warpY.at(dy) : { pos: dy, z: 0, angle: 0 };
+        if (px.hidden || py.hidden) continue;
+
         const card = pool[i] ?? el.appendChild(Object.assign(document.createElement('div'), { className: 'infinite-grid__card' }));
         pool[i++] = card;
         card.style.width = `${w}px`;
         card.style.height = `${h}px`;
-        card.style.transform = `translate3d(${col * pitchX + shift + offset.x}px, ${row * pitchY + offset.y}px, 0)`;
+        // One tilt about a combined axis, so corners don't twist like they
+        // would with separate rotateX/rotateY.
+        const tilt = Math.hypot(px.angle, py.angle);
+        card.style.transform =
+          `translate3d(${W / 2 + px.pos - w / 2}px, ${H / 2 + py.pos - h / 2}px, ${px.z + py.z}px) ` +
+          (tilt ? `rotate3d(${py.angle}, ${-px.angle}, 0, ${tilt}rad)` : '');
         card.hidden = false;
       }
     }
@@ -90,4 +112,28 @@ export function mountInfiniteGrid(el, config) {
     requestAnimationFrame(tick);
   };
   tick();
+}
+
+// Wraps a flat line of length 2*half onto a circle. amount > 0 bends it towards
+// the viewer (inside of a cylinder), amount < 0 away (outside of a drum).
+// At |amount| = 1 the screen edge sits a quarter turn round the circle.
+function bend(half, amount) {
+  if (Math.abs(amount) < 0.001) return null;
+  const sign = Math.sign(amount);
+  const radius = half / (Math.abs(amount) * (Math.PI / 2));
+  // How much flat distance it takes to reach the screen edge (or the side of the circle).
+  const limit = Math.PI * 0.45; // past this, cards are near edge-on slivers
+  const span = radius * Math.min(limit, Math.asin(Math.min(1, half / radius)));
+  return {
+    span,
+    at(d) {
+      const angle = d / radius;
+      if (Math.abs(angle) > limit) return { hidden: true };
+      return {
+        pos: radius * Math.sin(angle),
+        z: sign * radius * (1 - Math.cos(angle)),
+        angle: sign * angle,
+      };
+    },
+  };
 }
