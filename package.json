@@ -1,0 +1,15 @@
+{
+  "name": "portfolio",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "playground": "vite --open /playground/",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "tweakpane": "^4.0.5",
+    "vite": "^6.4.5"
+  }
+}

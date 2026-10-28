@@ -1,0 +1,13 @@
+{
+  "hero": {
+    "spotlightEnabled": true,
+    "spotlightRadius": 280,
+    "spotlightSoftness": 0.6,
+    "followLag": 0.12
+  },
+  "colour": {
+    "background": "#fdfdfd",
+    "text": "#383b2f",
+    "spotlight": "#e3e8d2"
+  }
+}
