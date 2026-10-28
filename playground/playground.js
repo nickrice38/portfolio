@@ -85,10 +85,9 @@ const TIPS = {
   Recoil: 'How far the grid kicks when you shoot, in pixels. 0 for no kick.',
   'Zoom delay': 'Pause after the shot before the card zooms open, in milliseconds. Lets the hitmarker land.',
   'Zoom time': 'How long the card takes to grow into the project view, in milliseconds.',
-  'Menu width': 'Width of the space the cards move aside for, in pixels. Always dead centre.',
-  'Menu height': 'Height of the space the cards move aside for, in pixels.',
-  Transition: 'How long the cards take to slide aside or back, in milliseconds.',
-  Split: 'Which way the cards move aside. Both ways opens a cross around the menu; Sideways parts them like curtains; Up and down like a lift.',
+  'Cards cleared': 'How big the gap for the menu is: the aimed card plus the rings around it. 3 × 3 removes the card and its 8 neighbours.',
+  Transition: 'How long the cards take to fade out or back in, in milliseconds.',
+  Stagger: 'How spread out the fade is. 0 moves all the cards together; higher ripples from the middle card outwards.',
   'Link gaps': 'When on, the horizontal and vertical gaps move together.',
   'Gap X': 'Space between cards side to side.',
   'Gap Y': 'Space between rows of cards.',
@@ -199,10 +198,9 @@ layout.addBinding(grid, 'zoom', { label: 'Zoom', min: 0.25, max: 3, step: 0.01 }
 
 // Home
 const homeFolder = pane.addFolder({ title: 'Menu' });
-homeFolder.addBinding(home, 'width', { label: 'Menu width', min: 200, max: 1000, step: 10 });
-homeFolder.addBinding(home, 'height', { label: 'Menu height', min: 150, max: 800, step: 10 });
+homeFolder.addBinding(home, 'size', { label: 'Cards cleared', options: { '1 × 1': 1, '3 × 3': 3, '5 × 5': 5 } });
 homeFolder.addBinding(home, 'transition', { label: 'Transition', min: 200, max: 2000, step: 10 });
-homeFolder.addBinding(home, 'split', { label: 'Split', options: { 'Both ways': 'both', Sideways: 'horizontal', 'Up and down': 'vertical' } });
+homeFolder.addBinding(home, 'stagger', { label: 'Stagger', min: 0, max: 2, step: 0.05 });
 homeFolder.addButton({ title: 'Open menu (Esc)' }).on('click', () => menu.show());
 homeFolder.addButton({ title: 'Play' }).on('click', () => menu.play());
 

@@ -11,10 +11,9 @@
     "projectCount": 12
   },
   "home": {
-    "width": 480,
-    "height": 380,
+    "size": 3,
     "transition": 700,
-    "split": "both"
+    "stagger": 0.6
   },
   "control": {
     "mode": "drag",
