@@ -5,9 +5,12 @@ import { applyEffects } from '../src/effects/apply.js';
 import { mountInfiniteGrid } from '../src/effects/infinite-grid.js';
 import { mountCrosshair } from '../src/effects/crosshair.js';
 import { mountShot } from '../src/effects/shot.js';
+import { mountPauseMenu } from '../src/effects/pause-menu.js';
+import { MENU_ITEMS } from '../src/menu.js';
 import '../src/effects/infinite-grid.css';
 import '../src/effects/crosshair.css';
 import '../src/effects/shot.css';
+import '../src/effects/pause-menu.css';
 import './panel.css';
 
 const ASPECT_RATIOS = {
@@ -82,8 +85,10 @@ const TIPS = {
   Recoil: 'How far the grid kicks when you shoot, in pixels. 0 for no kick.',
   'Zoom delay': 'Pause after the shot before the card zooms open, in milliseconds. Lets the hitmarker land.',
   'Zoom time': 'How long the card takes to grow into the project view, in milliseconds.',
-  'Home width': 'How many cards wide the empty home area in the middle is. 0 turns it off.',
-  'Home height': 'How many cards tall the empty home area is.',
+  'Menu width': 'How many cards wide the gap for the menu is.',
+  'Menu height': 'How many cards tall the gap for the menu is.',
+  Transition: 'How long the cards take to clear out or fill back in, in milliseconds.',
+  Stagger: 'How spread out the card animation is. 0 moves them all together; higher ripples from the middle outwards.',
   'Link gaps': 'When on, the horizontal and vertical gaps move together.',
   'Gap X': 'Space between cards side to side.',
   'Gap Y': 'Space between rows of cards.',
@@ -110,6 +115,7 @@ const canvas = document.querySelector('.canvas');
 const gridApi = mountInfiniteGrid(canvas, config);
 mountCrosshair(canvas, gridApi, config);
 mountShot(canvas, gridApi, config);
+const menu = mountPauseMenu(canvas, gridApi, config, MENU_ITEMS);
 
 const pane = new Pane({ container: document.querySelector('.panel') });
 
@@ -192,10 +198,13 @@ layout.addBinding(grid, 'rowOffset', { label: 'Row offset', min: 0, max: 1, step
 layout.addBinding(grid, 'zoom', { label: 'Zoom', min: 0.25, max: 3, step: 0.01 });
 
 // Home
-const homeFolder = pane.addFolder({ title: 'Home' });
-homeFolder.addBinding(home, 'cols', { label: 'Home width', min: 0, max: 6, step: 1 });
-homeFolder.addBinding(home, 'rows', { label: 'Home height', min: 0, max: 6, step: 1 });
-homeFolder.addButton({ title: 'Go home (H)' }).on('click', () => gridApi.home());
+const homeFolder = pane.addFolder({ title: 'Menu' });
+homeFolder.addBinding(home, 'cols', { label: 'Menu width', min: 1, max: 6, step: 1 });
+homeFolder.addBinding(home, 'rows', { label: 'Menu height', min: 1, max: 6, step: 1 });
+homeFolder.addBinding(home, 'transition', { label: 'Transition', min: 200, max: 2000, step: 10 });
+homeFolder.addBinding(home, 'stagger', { label: 'Stagger', min: 0, max: 2, step: 0.05 });
+homeFolder.addButton({ title: 'Open menu (Esc)' }).on('click', () => menu.show());
+homeFolder.addButton({ title: 'Play' }).on('click', () => menu.play());
 
 // Warp
 const warpFolder = pane.addFolder({ title: 'Warp' });

@@ -14,7 +14,10 @@ export function mountInfiniteGrid(el, config) {
   let lastInput = 0;
   let target = null;
   let paused = false;
-  let homed = false; // centre on the home area on the first frame
+  // The hole: a block of cells cleared for the menu. `origin` is its top-left
+  // cell, `open` animates 0 (cards in place) to 1 (cards gone).
+  const hole = { origin: null, open: 1, from: 1, to: 1, start: 0 };
+  let glide = null; // { from, to, start }: offset tween that centres the hole
 
   let aimAt = null; // mouse position relative to the centre, for joystick mode
   const locked = () => document.pointerLockElement === el;
@@ -78,7 +81,11 @@ export function mountInfiniteGrid(el, config) {
     }
   };
   el.addEventListener('pointerleave', () => (aimAt = null));
-  document.addEventListener('pointerlockchange', () => el.classList.toggle('is-locked', locked()));
+  document.addEventListener('pointerlockchange', () => {
+    el.classList.toggle('is-locked', locked());
+    // Losing the pointer lock outside a shot (usually Esc) means pause, like a game.
+    if (!locked() && !paused) el.dispatchEvent(new CustomEvent('unlock'));
+  });
   el.addEventListener('pointerup', endDrag);
   el.addEventListener('pointercancel', endDrag);
 
@@ -108,10 +115,6 @@ export function mountInfiniteGrid(el, config) {
   addEventListener('keydown', (e) => {
     const key = e.key.toLowerCase();
     if (paused || typing(e) || e.metaKey || e.ctrlKey || e.altKey) return;
-    if (key === 'h') {
-      homed = false;
-      return;
-    }
     if ((key === ' ' || key === 'enter') && target) {
       e.preventDefault();
       el.dispatchEvent(new CustomEvent('shoot', { detail: target }));
@@ -181,37 +184,48 @@ export function mountInfiniteGrid(el, config) {
     const H = el.clientHeight;
     const shiftOf = (row) => (row & 1) * grid.rowOffset * pitchX;
 
-    // Home: an empty block of cells at the middle of the grid, left free for content.
-    const { cols, rows } = config.home;
-    const homeCol0 = -Math.floor(cols / 2);
-    const homeRow0 = -Math.floor(rows / 2);
-    const isHome = (col, row) => col >= homeCol0 && col < homeCol0 + cols && row >= homeRow0 && row < homeRow0 + rows;
-    const homeX = homeCol0 * pitchX + (cols * pitchX - (pitchX - w)) / 2;
-    const homeY = homeRow0 * pitchY + (rows * pitchY - (pitchY - h)) / 2;
-    if (!homed) {
-      offset.x = W / 2 - (cols ? homeX : w / 2);
-      offset.y = H / 2 - (rows ? homeY : h / 2);
-      velocity.x = velocity.y = 0;
-      homed = true;
+    // The hole: cells cleared for the menu, eased open and closed over time.
+    const { cols, rows, transition, stagger } = config.home;
+    const now = performance.now();
+    const ease = (t) => 1 - (1 - Math.min(1, Math.max(0, t))) ** 3;
+    const holeW = cols * pitchX - (pitchX - w);
+    const holeH = rows * pitchY - (pitchY - h);
+    if (!hole.origin) {
+      // First frame: hole at the middle of the grid, already open and centred.
+      hole.origin = { col: -Math.floor(cols / 2), row: -Math.floor(rows / 2) };
+      offset.x = W / 2 - (hole.origin.col * pitchX + holeW / 2);
+      offset.y = H / 2 - (hole.origin.row * pitchY + holeH / 2);
     }
-    // Is the crosshair over the home area (gaps around it included)?
-    const inHome =
-      cols > 0 && rows > 0 &&
-      Math.abs(W / 2 - offset.x - homeX) <= (cols * pitchX) / 2 &&
-      Math.abs(H / 2 - offset.y - homeY) <= (rows * pitchY) / 2;
+    hole.open = hole.from + (hole.to - hole.from) * ease((now - hole.start) / transition);
+    if (glide) {
+      const t = ease((now - glide.start) / transition);
+      offset.x = glide.from.x + (glide.to.x - glide.from.x) * t;
+      offset.y = glide.from.y + (glide.to.y - glide.from.y) * t;
+      if (t >= 1) glide = null;
+    }
+    const holeActive = hole.open > 0.001 && cols > 0 && rows > 0;
+    const inHole = (col, row) =>
+      holeActive && col >= hole.origin.col && col < hole.origin.col + cols && row >= hole.origin.row && row < hole.origin.row + rows;
+    // 0..1 visibility for a hole card. Cards nearest the middle leave first and return last.
+    const presence = (col, row) => {
+      const cx = (col - hole.origin.col + 0.5) / cols - 0.5;
+      const cy = (row - hole.origin.row + 0.5) / rows - 0.5;
+      const d = Math.min(1, Math.hypot(cx, cy) * Math.SQRT2); // 0 centre .. 1 corner
+      return Math.min(1, Math.max(0, (1 - hole.open) * (1 + stagger) - (1 - d) * stagger));
+    };
+    holeRect = { width: holeW, height: holeH };
 
     // Nearest card to the centre of the screen, in flat grid space.
     const nearRow = Math.round((H / 2 - offset.y - h / 2) / pitchY);
     const nearCol = Math.round((W / 2 - offset.x - shiftOf(nearRow) - w / 2) / pitchX);
     const nearDx = nearCol * pitchX + shiftOf(nearRow) + offset.x + w / 2 - W / 2;
     const nearDy = nearRow * pitchY + offset.y + h / 2 - H / 2;
-    const nearIsHome = isHome(nearCol, nearRow);
+    const nearIsHome = inHole(nearCol, nearRow);
     const onCard = !nearIsHome && Math.abs(nearDx) <= w / 2 && Math.abs(nearDy) <= h / 2;
 
     // Settle: once things are still, ease the nearest card under the crosshair.
-    // Resting in the home area is allowed, so it never settles there.
     const still = !drag && !held.size && Math.hypot(velocity.x, velocity.y) < 0.5;
-    if (still && !paused && !inHome && !nearIsHome && aim.settle > 0 && performance.now() - lastInput > aim.settleDelay) {
+    if (still && !paused && !holeActive && aim.settle > 0 && performance.now() - lastInput > aim.settleDelay) {
       offset.x -= nearDx * aim.settle;
       offset.y -= nearDy * aim.settle;
       velocity.x = velocity.y = 0;
@@ -252,13 +266,14 @@ export function mountInfiniteGrid(el, config) {
         const dy = row * pitchY + offset.y + h / 2 - H / 2;
         const px = warpX ? warpX.at(dx) : { pos: dx, z: 0, angle: 0 };
         const py = warpY ? warpY.at(dy) : { pos: dy, z: 0, angle: 0 };
-        if (px.hidden || py.hidden || isHome(col, row)) continue;
+        const shown = inHole(col, row) ? presence(col, row) : 1;
+        if (px.hidden || py.hidden || shown <= 0) continue;
 
         const card = pool[i] ?? el.appendChild(Object.assign(document.createElement('div'), { className: 'infinite-grid__card' }));
         pool[i++] = card;
         const cellKey = `${col},${row}`;
         const lift = lifts.get(cellKey) ?? 0;
-        const scale = 1 + lift * (aim.liftScale - 1);
+        const scale = (1 + lift * (aim.liftScale - 1)) * (0.6 + 0.4 * shown);
         // One tilt about a combined axis, so corners don't twist like they
         // would with separate rotateX/rotateY.
         const tilt = Math.hypot(px.angle, py.angle);
@@ -269,6 +284,7 @@ export function mountInfiniteGrid(el, config) {
           (tilt ? `rotate3d(${py.angle}, ${-px.angle}, 0, ${tilt}rad) ` : '') +
           `scale(${scale})`;
         card.style.setProperty('--lift', lift);
+        card.style.opacity = shown;
         card.classList.toggle('is-target', cellKey === target?.key);
         if (cellKey === target?.key) target.element = card;
         card.hidden = false;
@@ -278,12 +294,42 @@ export function mountInfiniteGrid(el, config) {
 
     requestAnimationFrame(tick);
   };
+  let holeRect = { width: 0, height: 0 };
   tick();
 
   return {
-    // Jump back to the home area.
-    home: () => {
-      homed = false;
+    // Clear a block of cards around the current view (centring it), or fill it back in.
+    setHole(open) {
+      const { cols, rows } = config.home;
+      const now = performance.now();
+      if (open) {
+        const g = config.grid;
+        const w = g.cardWidth * g.zoom;
+        const h = w / g.aspectRatio;
+        const pitchX = w + g.gapX * g.zoom;
+        const pitchY = h + g.gapY * g.zoom;
+        const holeW = cols * pitchX - (pitchX - w);
+        const holeH = rows * pitchY - (pitchY - h);
+        // Grid-space point under the crosshair; pick the block of cells centred on it.
+        const gx = el.clientWidth / 2 - offset.x;
+        const gy = el.clientHeight / 2 - offset.y;
+        hole.origin = { col: Math.round((gx - holeW / 2) / pitchX), row: Math.round((gy - holeH / 2) / pitchY) };
+        glide = {
+          from: { ...offset },
+          to: {
+            x: el.clientWidth / 2 - (hole.origin.col * pitchX + holeW / 2),
+            y: el.clientHeight / 2 - (hole.origin.row * pitchY + holeH / 2),
+          },
+          start: now,
+        };
+      }
+      hole.from = hole.open;
+      hole.to = open ? 1 : 0;
+      hole.start = now;
+      velocity.x = velocity.y = 0;
+    },
+    get holeRect() {
+      return holeRect;
     },
     pause: (value) => {
       paused = value;

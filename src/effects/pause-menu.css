@@ -1,0 +1,127 @@
+.pause-menu {
+  position: fixed;
+  z-index: 15;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 24px;
+  box-sizing: border-box;
+  color: #1b1b1b;
+  font-family: "Inter", system-ui, sans-serif;
+  transform: translate(-50%, -50%) scale(0.98);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 220ms ease-out, transform 220ms ease-out, visibility 0s 220ms;
+}
+
+.pause-menu.is-open {
+  transform: translate(-50%, -50%);
+  opacity: 1;
+  visibility: visible;
+  transition: opacity 280ms ease-out, transform 280ms ease-out, visibility 0s;
+}
+
+.pause-menu__eyebrow {
+  margin: 0 0 16px 12px;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  opacity: 0.5;
+}
+
+.pause-menu__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pause-menu button {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 6px 12px;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  color: inherit;
+  font: 700 28px/1.2 "Inter", system-ui, sans-serif;
+  letter-spacing: -0.02em;
+  text-align: left;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.pause-menu button.is-selected {
+  background: #1b1b1b;
+  color: #fff;
+}
+
+.pause-menu button:focus-visible {
+  outline: 2px solid #0d99ff;
+  outline-offset: 2px;
+}
+
+.pause-menu button[data-soon]::after {
+  content: "Soon";
+  padding: 3px 6px;
+  border-radius: 4px;
+  background: var(--crosshair-target-colour);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+}
+
+.pause-menu__hint,
+.pause-hud {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 16px 0 0 12px;
+  font: 500 11px/1 "Inter", system-ui, sans-serif;
+  color: #1b1b1b;
+  opacity: 0.5;
+}
+
+.pause-menu kbd,
+.pause-hud kbd {
+  min-width: 18px;
+  padding: 3px 5px;
+  border: 1px solid currentColor;
+  border-radius: 4px;
+  font: inherit;
+  text-align: center;
+}
+
+.pause-hud {
+  position: fixed;
+  bottom: 24px;
+  z-index: 10;
+  margin: 0;
+  pointer-events: none;
+  transition: opacity 200ms ease-out;
+}
+
+/* While the menu is up: no crosshair, no HUD or control hints, plain cursor. */
+.is-menu-open .crosshair,
+.is-menu-open .pause-hud {
+  opacity: 0;
+}
+
+.is-menu-open .infinite-grid {
+  cursor: default;
+}
+
+.is-menu-open .infinite-grid::before,
+.is-menu-open .infinite-grid::after {
+  display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pause-menu,
+  .pause-menu.is-open {
+    transition: none;
+  }
+}
