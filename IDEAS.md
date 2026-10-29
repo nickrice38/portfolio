@@ -21,7 +21,7 @@ Tick them off as they land.
 - [ ] Minimap that shows position and doubles as a jump-to menu
 
 ## Aiming and feel
-- [ ] Aim down sights: hold right-click or Shift to zoom in on a card
+- [x] Aim down sights: hold right-click or Shift to zoom in on a card
 - [ ] Hit sound and shot sound, muted by default, with a toggle
 - [ ] Faint white screen flash on a headshot (~40ms)
 - [ ] Mouse sway: the grid shifts a few pixels with mouse movement

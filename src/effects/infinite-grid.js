@@ -24,11 +24,24 @@ export function mountInfiniteGrid(el, config) {
   const locked = () => document.pointerLockElement === el;
 
   const touched = () => (lastInput = performance.now());
-  // Aim assist slowdown: input moves the grid less while a card is targeted.
-  const sticky = () => (target ? 1 - config.aim.stickiness : 1);
+  // Aim down sights: hold right-click or Shift to zoom in on the crosshair.
+  // `k` is the current zoom, tweened slowly in and quickly out.
+  const ads = { k: 1, from: 1, to: 1, start: 0, duration: 1, held: new Set() };
+  const aimDown = (source, on) => {
+    if (on ? ads.held.has(source) : !ads.held.has(source)) return;
+    on ? ads.held.add(source) : ads.held.delete(source);
+    const to = ads.held.size && !paused ? config.ads.zoom : 1;
+    if (to === ads.to) return;
+    Object.assign(ads, { from: ads.k, to, start: performance.now(), duration: to > 1 ? config.ads.inTime : config.ads.outTime });
+  };
+  // Aim assist slowdown: input moves the grid less while a card is targeted,
+  // and less again while zoomed in, so aim stays steady down the sights.
+  const sticky = () => (target ? 1 - config.aim.stickiness : 1) / ads.k;
 
+  el.addEventListener('contextmenu', (e) => e.preventDefault());
   el.addEventListener('pointerdown', (e) => {
     if (paused) return;
+    if (e.button === 2) return aimDown('mouse', true);
     // Mouse look: every press while locked is a shot, no dragging.
     if (locked()) {
       if (target) el.dispatchEvent(new CustomEvent('shoot', { detail: target }));
@@ -68,8 +81,10 @@ export function mountInfiniteGrid(el, config) {
     touched();
   });
 
+  // Release anywhere ends aiming down sights, even off the grid.
+  addEventListener('pointerup', (e) => e.button === 2 && aimDown('mouse', false));
   const endDrag = (e) => {
-    if (!drag) return;
+    if (e.button === 2 || !drag) return;
     const clicked = e.type === 'pointerup' && drag.travel < 4;
     drag = null;
     el.classList.remove('is-dragging');
@@ -116,6 +131,7 @@ export function mountInfiniteGrid(el, config) {
   addEventListener('keydown', (e) => {
     const key = e.key.toLowerCase();
     if (paused || typing(e) || e.metaKey || e.ctrlKey || e.altKey) return;
+    if (key === 'shift') return aimDown('shift', true);
     if ((key === ' ' || key === 'enter') && target) {
       e.preventDefault();
       el.dispatchEvent(new CustomEvent('shoot', { detail: target }));
@@ -125,8 +141,16 @@ export function mountInfiniteGrid(el, config) {
     e.preventDefault();
     held.add(key);
   });
-  addEventListener('keyup', (e) => held.delete(e.key.toLowerCase()));
-  addEventListener('blur', () => held.clear());
+  addEventListener('keyup', (e) => {
+    const key = e.key.toLowerCase();
+    if (key === 'shift') aimDown('shift', false);
+    held.delete(key);
+  });
+  addEventListener('blur', () => {
+    held.clear();
+    aimDown('shift', false);
+    aimDown('mouse', false);
+  });
 
   const reduced = matchMedia('(prefers-reduced-motion: reduce)');
 
@@ -176,6 +200,12 @@ export function mountInfiniteGrid(el, config) {
         offset.y += motion.driftY;
       }
     }
+
+    // Aim down sights: smooth ease in, quick ease out.
+    const adsT = Math.min(1, (performance.now() - ads.start) / (reduced.matches ? 1 : ads.duration));
+    const adsEase = ads.to > ads.from ? (t) => (t < 0.5 ? 4 * t ** 3 : 1 - (-2 * t + 2) ** 3 / 2) : (t) => 1 - (1 - t) ** 3;
+    ads.k = ads.from + (ads.to - ads.from) * adsEase(adsT);
+    const k = ads.k;
 
     const w = grid.cardWidth * grid.zoom;
     const h = w / grid.aspectRatio;
@@ -263,15 +293,16 @@ export function mountInfiniteGrid(el, config) {
         const dx = col * pitchX + shift + offset.x + w / 2 - W / 2;
         const dy = row * pitchY + offset.y + h / 2 - H / 2;
         const shown = inHole(col, row) ? presence(col, row) : 1;
-        const px = warpX ? warpX.at(dx) : { pos: dx, z: 0, angle: 0 };
-        const py = warpY ? warpY.at(dy) : { pos: dy, z: 0, angle: 0 };
+        // Zoom about the crosshair by scaling distances from the centre.
+        const px = warpX ? warpX.at(dx * k) : { pos: dx * k, z: 0, angle: 0 };
+        const py = warpY ? warpY.at(dy * k) : { pos: dy * k, z: 0, angle: 0 };
         if (px.hidden || py.hidden || shown <= 0) continue;
 
         const card = pool[i] ?? el.appendChild(Object.assign(document.createElement('div'), { className: 'infinite-grid__card' }));
         pool[i++] = card;
         const cellKey = `${col},${row}`;
         const lift = lifts.get(cellKey) ?? 0;
-        const scale = (1 + lift * (aim.liftScale - 1)) * (0.6 + 0.4 * shown);
+        const scale = (1 + lift * (aim.liftScale - 1)) * (0.6 + 0.4 * shown) * k;
         // One tilt about a combined axis, so corners don't twist like they
         // would with separate rotateX/rotateY.
         const tilt = Math.hypot(px.angle, py.angle);
@@ -310,6 +341,10 @@ export function mountInfiniteGrid(el, config) {
     },
     pause: (value) => {
       paused = value;
+      if (value) {
+        aimDown('shift', false);
+        aimDown('mouse', false);
+      }
       if (value && locked()) document.exitPointerLock();
       held.clear();
       velocity.x = velocity.y = 0;

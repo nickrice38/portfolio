@@ -53,6 +53,11 @@
     "liftScale": 1.04,
     "targetFill": "#cfcfcb"
   },
+  "ads": {
+    "zoom": 1.8,
+    "inTime": 450,
+    "outTime": 160
+  },
   "shot": {
     "recoil": 6,
     "delay": 90,
