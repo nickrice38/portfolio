@@ -1,0 +1,107 @@
+.hud-counter,
+.hud-feed,
+.hud-medal {
+  position: fixed;
+  z-index: 12;
+  color: #1b1b1b;
+  font-family: "Inter", system-ui, sans-serif;
+  pointer-events: none;
+  transition: opacity 200ms ease-out;
+}
+
+/* Score and projects, top left. */
+.hud-counter {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.hud-counter__label,
+.hud-counter__projects {
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  opacity: 0.55;
+}
+
+.hud-counter__score {
+  font-family: "Michroma", sans-serif;
+  font-size: 24px;
+  line-height: 1.2;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Kill feed, top right. */
+.hud-feed {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.hud-feed li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  background: rgb(27 27 27 / 0.85);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.hud-feed__name {
+  color: var(--score-colour);
+}
+
+.hud-feed__icon {
+  width: 14px;
+  height: 14px;
+  color: var(--crosshair-target-colour);
+}
+
+.hud-feed__points {
+  color: var(--score-colour);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Streak medal banner, top centre. */
+.hud-medal {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 12px 24px;
+  border-radius: 8px;
+  background: #1b1b1b;
+  color: #fff;
+  opacity: 0;
+  transform: translateX(-50%);
+}
+
+.hud-medal__eyebrow {
+  color: var(--score-colour);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.hud-medal__title {
+  font-family: "Michroma", sans-serif;
+  font-size: 22px;
+  text-transform: uppercase;
+}
+
+/* Hidden while the pause menu is up. */
+.is-menu-open .hud-counter,
+.is-menu-open .hud-feed {
+  opacity: 0;
+}

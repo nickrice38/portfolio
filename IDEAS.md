@@ -9,14 +9,14 @@ Tick them off as they land.
 - [x] Stacking: rapid shots merge into one rising total
 - [x] "+1000 NEW PROJECT" the first time a project is opened
 - [x] "FIRST BLOOD +250" on the first project of a visit
-- [ ] Streak medals after 3 / 5 / 10 projects ("3 PROJECT STREAK", "RECRUITER'S DELIGHT")
+- [x] Streak medals after 3 / 5 / 10 projects ("3 PROJECT STREAK", "RECRUITER'S DELIGHT")
 - [ ] Collectibles: points for visiting About, Contact etc.; "100% COMPLETE" when all found
 - [ ] Double XP: a random timed bonus, just for fun
 
 ## HUD
-- [ ] Kill feed (top right): "Nick ⌖ Project 09" for each project opened
-- [ ] Running score counter in a corner
-- [ ] Ammo counter: projects seen, e.g. "07 / 12"
+- [x] Kill feed (top right): "Nick ⌖ Project 09" for each project opened
+- [x] Running score counter in a corner
+- [x] Ammo counter: projects seen, e.g. "07 / 12"
 - [ ] XP bar that fills while exploring; "level up" unlocks CV download / contact
 - [ ] Minimap that shows position and doubles as a jump-to menu
 

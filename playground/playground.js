@@ -6,12 +6,14 @@ import { mountInfiniteGrid } from '../src/effects/infinite-grid.js';
 import { mountCrosshair } from '../src/effects/crosshair.js';
 import { mountShot } from '../src/effects/shot.js';
 import { mountScorePopup } from '../src/effects/score-popup.js';
+import { mountHud } from '../src/effects/hud.js';
 import { mountPauseMenu } from '../src/effects/pause-menu.js';
 import { MENU_ITEMS } from '../src/menu.js';
 import '../src/effects/infinite-grid.css';
 import '../src/effects/crosshair.css';
 import '../src/effects/shot.css';
 import '../src/effects/score-popup.css';
+import '../src/effects/hud.css';
 import '../src/effects/pause-menu.css';
 import './panel.css';
 
@@ -93,6 +95,13 @@ const TIPS = {
   'Show label': 'Show what you earned (HEADSHOT, NEW PROJECT…) under the points.',
   Stack: 'Quick shots in a row add up into one rising total, like a multi-kill.',
   'Stack window': 'How soon the next shot has to land to keep stacking, in milliseconds.',
+  'Score counter': 'Running score and projects seen, top left.',
+  'Kill feed': 'A line top right for every shot, like a game kill feed.',
+  'Feed name': 'Your name at the start of each kill feed line.',
+  'Feed lines': 'How many lines the kill feed shows at once.',
+  'Feed time': 'How long each kill feed line stays before fading, in milliseconds.',
+  'Streak medals': 'A banner when you\'ve seen 3, 5 and 10 different projects.',
+  'Medal time': 'How long the streak banner stays on screen, in milliseconds.',
   Mode: 'How you aim. Drag: click and drag the grid. Joystick: move the mouse away from the centre to steer. Mouse look: the cursor locks and the mouse turns the view, like a shooter.',
   'Dead zone': 'The calm circle in the middle. While the mouse is inside it, nothing moves.',
   'Top speed': 'How fast the grid moves with the mouse at the very edge.',
@@ -137,6 +146,7 @@ const gridApi = mountInfiniteGrid(canvas, config);
 mountCrosshair(canvas, gridApi, config);
 mountShot(canvas, gridApi, config);
 const scorePopup = mountScorePopup(canvas, config);
+mountHud(canvas, config);
 const menu = mountPauseMenu(canvas, gridApi, config, MENU_ITEMS);
 
 const pane = new Pane({ container: document.querySelector('.panel') });
@@ -181,7 +191,7 @@ function load(values) {
 }
 
 // Card
-const { grid, home, warp, crosshair, aim, shot, score, control, motion, colour } = config;
+const { grid, home, warp, crosshair, aim, shot, score, hud, control, motion, colour } = config;
 const card = pane.addFolder({ title: 'Card' });
 card.addBinding(grid, 'cardWidth', { label: 'Width', min: 40, max: 800, step: 1 });
 card
@@ -325,6 +335,16 @@ scoreFolder.addButton({ title: 'Preview first shot of a visit' }).on('click', ()
   canvas.dispatchEvent(new CustomEvent('shoot', { detail: { precision: 0, preview: true, firstBlood: true, newProject: true } })),
 );
 scoreFolder.addButton({ title: 'Reset visit' }).on('click', () => scorePopup.resetVisit());
+
+// HUD
+const hudFolder = pane.addFolder({ title: 'HUD' });
+hudFolder.addBinding(hud, 'counter', { label: 'Score counter' });
+hudFolder.addBinding(hud, 'feed', { label: 'Kill feed' });
+hudFolder.addBinding(hud, 'feedName', { label: 'Feed name' });
+hudFolder.addBinding(hud, 'feedMax', { label: 'Feed lines', min: 1, max: 10, step: 1 });
+hudFolder.addBinding(hud, 'feedHold', { label: 'Feed time', min: 1000, max: 10000, step: 100 });
+hudFolder.addBinding(hud, 'medals', { label: 'Streak medals' });
+hudFolder.addBinding(hud, 'medalHold', { label: 'Medal time', min: 1000, max: 6000, step: 100 });
 
 // Control
 const controlFolder = pane.addFolder({ title: 'Control' });

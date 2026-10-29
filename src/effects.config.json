@@ -80,6 +80,15 @@
     "stack": true,
     "stackWindow": 1500
   },
+  "hud": {
+    "counter": true,
+    "feed": true,
+    "feedName": "Nick",
+    "feedMax": 5,
+    "feedHold": 4000,
+    "medals": true,
+    "medalHold": 2600
+  },
   "colour": {
     "background": "#f4f4f2",
     "card": "#d9d9d6"

@@ -11,6 +11,7 @@ export function mountScorePopup(gridEl, config) {
   const points = el.querySelector('.score-popup__points');
   const labels = el.querySelector('.score-popup__labels');
   const seen = new Set(); // projects opened this visit
+  let visitScore = 0;
   const reduced = matchMedia('(prefers-reduced-motion: reduce)');
   let total = 0;
   let lastShot = 0;
@@ -18,7 +19,6 @@ export function mountScorePopup(gridEl, config) {
 
   gridEl.addEventListener('shoot', ({ detail }) => {
     const s = config.score;
-    if (!s.enabled) return;
     const headshot = detail.precision <= s.headshotRadius;
     // Bonuses first, so the biggest news sits at the top of the label stack.
     const awards = [];
@@ -32,6 +32,15 @@ export function mountScorePopup(gridEl, config) {
     }
     awards.push(headshot ? ['Headshot', s.headshotPoints] : ['Hit', s.hitPoints]);
     const earned = awards.reduce((sum, [, pts]) => sum + pts, 0);
+    visitScore += earned;
+    // Let the HUD (counter, kill feed, medals) know.
+    gridEl.dispatchEvent(
+      new CustomEvent('score', {
+        detail: { earned, total: visitScore, awards, project: detail.project, seen: seen.size, preview: !!detail.preview },
+      }),
+    );
+    if (!s.enabled) return;
+
     const now = performance.now();
     total = s.stack && now - lastShot < s.stackWindow ? total + earned : earned;
     lastShot = now;
@@ -64,6 +73,10 @@ export function mountScorePopup(gridEl, config) {
 
   return {
     // Forget which projects were opened, as if it's a fresh visit.
-    resetVisit: () => seen.clear(),
+    resetVisit: () => {
+      seen.clear();
+      visitScore = 0;
+      gridEl.dispatchEvent(new CustomEvent('score', { detail: { earned: 0, total: 0, awards: [], seen: 0, reset: true } }));
+    },
   };
 }
