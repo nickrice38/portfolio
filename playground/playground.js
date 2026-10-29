@@ -7,6 +7,7 @@ import { mountCrosshair } from '../src/effects/crosshair.js';
 import { mountShot } from '../src/effects/shot.js';
 import { mountScorePopup } from '../src/effects/score-popup.js';
 import { mountHud } from '../src/effects/hud.js';
+import { mountImpact } from '../src/effects/impact.js';
 import { mountPauseMenu } from '../src/effects/pause-menu.js';
 import { MENU_ITEMS } from '../src/menu.js';
 import '../src/effects/infinite-grid.css';
@@ -14,6 +15,7 @@ import '../src/effects/crosshair.css';
 import '../src/effects/shot.css';
 import '../src/effects/score-popup.css';
 import '../src/effects/hud.css';
+import '../src/effects/impact.css';
 import '../src/effects/pause-menu.css';
 import './panel.css';
 
@@ -75,6 +77,12 @@ const TIPS = {
   Tighten: 'How much the crosshair closes in when on a card. 1 means no change, lower pulls tighter.',
   'Show name': 'Show the targeted project\'s name under the crosshair, like a nametag.',
   Assist: 'Ready-made aim assist feels, from Off to Lock-on. Pick one, then fine-tune below.',
+  Sound: 'Hitmarker tick on every shot, plus a ding on headshots. Off by default so visitors aren\'t surprised.',
+  Volume: 'How loud the hit sounds are.',
+  'Headshot flash': 'A quick, faint white flash over the screen when you land a headshot.',
+  'Flash strength': 'How bright the headshot flash gets. Keep it low; it should be felt more than seen.',
+  'Camera punch': 'How much the view kicks forward on a shot. Headshots get the full amount, hits get half. 1 is off.',
+  'Colour split': 'Red and cyan edges flash on the hit card, like a damage glitch, in pixels. 0 is off.',
   'Show score': 'Turn the +500 pop-up on or off.',
   Font: 'Typeface for the pop-up. Michroma is closest to the wide MW2 look.',
   'Score colour': 'Colour of the pop-up text.',
@@ -162,6 +170,7 @@ mountCrosshair(canvas, gridApi, config);
 mountShot(canvas, gridApi, config);
 const scorePopup = mountScorePopup(canvas, config);
 mountHud(canvas, config);
+mountImpact(canvas, config);
 const menu = mountPauseMenu(canvas, gridApi, config, MENU_ITEMS);
 
 const pane = new Pane({ container: document.querySelector('.panel') });
@@ -206,7 +215,7 @@ function load(values) {
 }
 
 // Card
-const { grid, home, warp, crosshair, aim, ads, shot, score, hud, control, motion, lanes, colour } = config;
+const { grid, home, warp, crosshair, aim, ads, shot, impact, score, hud, control, motion, lanes, colour } = config;
 const card = pane.addFolder({ title: 'Card' });
 card.addBinding(grid, 'cardWidth', { label: 'Width', min: 40, max: 800, step: 1 });
 card
@@ -324,6 +333,21 @@ const shotFolder = pane.addFolder({ title: 'Shot' });
 shotFolder.addBinding(shot, 'recoil', { label: 'Recoil', min: 0, max: 30, step: 1 });
 shotFolder.addBinding(shot, 'delay', { label: 'Zoom delay', min: 0, max: 400, step: 10 });
 shotFolder.addBinding(shot, 'zoomDuration', { label: 'Zoom time', min: 100, max: 1500, step: 10 });
+
+// Impact
+const impactFolder = pane.addFolder({ title: 'Impact' });
+impactFolder.addBinding(impact, 'sound', { label: 'Sound' });
+impactFolder.addBinding(impact, 'volume', { label: 'Volume', min: 0, max: 1, step: 0.01 });
+impactFolder.addBinding(impact, 'flash', { label: 'Headshot flash' });
+impactFolder.addBinding(impact, 'flashStrength', { label: 'Flash strength', min: 0, max: 1, step: 0.01 });
+impactFolder.addBinding(impact, 'punch', { label: 'Camera punch', min: 1, max: 1.15, step: 0.005 });
+impactFolder.addBinding(impact, 'split', { label: 'Colour split', min: 0, max: 20, step: 0.5 });
+impactFolder.addButton({ title: 'Test headshot' }).on('click', () =>
+  canvas.dispatchEvent(new CustomEvent('shoot', { detail: { ...gridApi.target, precision: 0, preview: true } })),
+);
+impactFolder.addButton({ title: 'Test hit' }).on('click', () =>
+  canvas.dispatchEvent(new CustomEvent('shoot', { detail: { ...gridApi.target, precision: 1, preview: true } })),
+);
 
 // Score
 const scoreFolder = pane.addFolder({ title: 'Score pop-up' });

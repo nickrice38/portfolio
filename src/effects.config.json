@@ -73,6 +73,14 @@
     "delay": 90,
     "zoomDuration": 520
   },
+  "impact": {
+    "sound": false,
+    "volume": 0.4,
+    "flash": true,
+    "flashStrength": 0.35,
+    "punch": 1.03,
+    "split": 6
+  },
   "score": {
     "enabled": true,
     "font": "michroma",

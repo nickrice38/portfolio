@@ -22,8 +22,8 @@ Tick them off as they land.
 
 ## Aiming and feel
 - [x] Aim down sights: hold right-click or Shift to zoom in on a card
-- [ ] Hit sound and shot sound, muted by default, with a toggle
-- [ ] Faint white screen flash on a headshot (~40ms)
+- [x] Hit sound and shot sound, muted by default, with a toggle
+- [x] Faint white screen flash on a headshot (~120ms), plus camera punch and colour split
 - [x] Moving lanes: rows slide sideways shooting-gallery style (try-out, may revert)
 - [ ] Mouse sway: the grid shifts a few pixels with mouse movement
 - [ ] Depth shading: cards darken or fade as the warp curves them away

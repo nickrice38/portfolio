@@ -1,0 +1,7 @@
+.impact-flash {
+  position: fixed;
+  z-index: 25; /* over the grid and project view, under the score pop-up */
+  background: #fff;
+  opacity: 0;
+  pointer-events: none;
+}
