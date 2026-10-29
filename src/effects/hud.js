@@ -1,5 +1,5 @@
 // Game HUD fed by the score pop-up's `score` events: a running score and
-// projects counter (top left), a kill feed (top right) and streak medals
+// projects counter (top left), a kill feed (bottom left) and streak medals
 // when you've seen 3, 5 and 10 different projects.
 const MEDALS = {
   3: ['3 project streak', 'Hat trick'],
@@ -57,14 +57,14 @@ export function mountHud(gridEl, config) {
     });
     const pts = Object.assign(document.createElement('span'), { className: 'hud-feed__points', textContent: `+${earned}` });
     line.append(name, crosshairIcon(), what, pts);
-    feed.prepend(line);
-    while (feed.children.length > config.hud.feedMax) feed.lastChild.remove();
+    feed.append(line); // newest at the bottom, like a game kill feed
+    while (feed.children.length > config.hud.feedMax) feed.firstChild.remove();
     const fade = line.animate(
       [{ opacity: 1 }, { opacity: 1, offset: 0.85 }, { opacity: 0 }],
       { duration: config.hud.feedHold, fill: 'forwards' },
     );
     fade.finished.then(() => line.remove()).catch(() => {});
-    if (!reduced.matches) line.animate([{ transform: 'translateX(16px)', opacity: 0 }, { transform: 'none', opacity: 1 }], { duration: 220, easing: 'ease-out' });
+    if (!reduced.matches) line.animate([{ transform: 'translateX(-16px)', opacity: 0 }, { transform: 'none', opacity: 1 }], { duration: 220, easing: 'ease-out' });
   }
 
   function showMedal(eyebrow, title) {
@@ -91,8 +91,8 @@ export function mountHud(gridEl, config) {
     const r = gridEl.getBoundingClientRect();
     counter.style.left = `${r.left + 24}px`;
     counter.style.top = `${r.top + 24}px`;
-    feed.style.right = `${innerWidth - r.right + 24}px`;
-    feed.style.top = `${r.top + 24}px`;
+    feed.style.left = `${r.left + 24}px`;
+    feed.style.bottom = `${innerHeight - r.bottom + 24}px`;
     medal.style.left = `${r.left + r.width / 2}px`;
     medal.style.top = `${r.top + 72}px`;
     counter.hidden = !config.hud.counter;

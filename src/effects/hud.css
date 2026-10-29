@@ -32,11 +32,11 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* Kill feed, top right. */
+/* Kill feed, bottom left. */
 .hud-feed {
   display: flex;
   flex-direction: column;
-  align-items: flex-end;
+  align-items: flex-start;
   gap: 4px;
   margin: 0;
   padding: 0;

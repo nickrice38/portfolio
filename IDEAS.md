@@ -14,7 +14,7 @@ Tick them off as they land.
 - [ ] Double XP: a random timed bonus, just for fun
 
 ## HUD
-- [x] Kill feed (top right): "Nick ⌖ Project 09" for each project opened
+- [x] Kill feed (bottom left): "Nick ⌖ Project 09" for each project opened
 - [x] Running score counter in a corner
 - [x] Ammo counter: projects seen, e.g. "07 / 12"
 - [ ] XP bar that fills while exploring; "level up" unlocks CV download / contact

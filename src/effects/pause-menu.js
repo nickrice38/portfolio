@@ -89,7 +89,8 @@ export function mountPauseMenu(gridEl, grid, config, items) {
     menu.style.top = `${r.top + hole.y + hole.height / 2}px`;
     menu.style.width = `${grid.holeRect.width}px`;
     menu.style.height = `${grid.holeRect.height}px`;
-    hud.style.left = `${r.left + 24}px`;
+    hud.style.right = `${innerWidth - r.right + 24}px`;
+    hud.style.top = `${r.top + 24}px`;
     requestAnimationFrame(sync);
   };
   sync();

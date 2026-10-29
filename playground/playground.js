@@ -96,7 +96,7 @@ const TIPS = {
   Stack: 'Quick shots in a row add up into one rising total, like a multi-kill.',
   'Stack window': 'How soon the next shot has to land to keep stacking, in milliseconds.',
   'Score counter': 'Running score and projects seen, top left.',
-  'Kill feed': 'A line top right for every shot, like a game kill feed.',
+  'Kill feed': 'A line bottom left for every shot, like a game kill feed.',
   'Feed name': 'Your name at the start of each kill feed line.',
   'Feed lines': 'How many lines the kill feed shows at once.',
   'Feed time': 'How long each kill feed line stays before fading, in milliseconds.',
