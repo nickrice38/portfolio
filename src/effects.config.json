@@ -56,7 +56,8 @@
   "ads": {
     "zoom": 1.8,
     "inTime": 450,
-    "outTime": 160
+    "outTime": 160,
+    "keySpeed": 0.5
   },
   "shot": {
     "recoil": 6,

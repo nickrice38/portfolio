@@ -116,6 +116,7 @@ const TIPS = {
   'ADS zoom': 'How far holding right-click or Shift zooms in on the card under the crosshair. 2 is double size.',
   'Zoom in time': 'How long the zoom takes to ease in while you hold, in milliseconds. Slower feels smoother.',
   'Zoom out time': 'How fast it snaps back when you let go, in milliseconds.',
+  'Zoomed key speed': 'WASD speed while zoomed in, compared with normal. 0.5 is half speed; 1 is the same as unzoomed.',
   Recoil: 'How far the grid kicks when you shoot, in pixels. 0 for no kick.',
   'Zoom delay': 'Pause after the shot before the card zooms open, in milliseconds. Lets the hitmarker land.',
   'Zoom time': 'How long the card takes to grow into the project view, in milliseconds.',
@@ -305,6 +306,7 @@ const adsFolder = pane.addFolder({ title: 'Aim down sights' });
 adsFolder.addBinding(ads, 'zoom', { label: 'ADS zoom', min: 1.1, max: 4, step: 0.05 });
 adsFolder.addBinding(ads, 'inTime', { label: 'Zoom in time', min: 100, max: 1500, step: 10 });
 adsFolder.addBinding(ads, 'outTime', { label: 'Zoom out time', min: 50, max: 800, step: 10 });
+adsFolder.addBinding(ads, 'keySpeed', { label: 'Zoomed key speed', min: 0.1, max: 1.5, step: 0.05 });
 
 // Shot
 const shotFolder = pane.addFolder({ title: 'Shot' });

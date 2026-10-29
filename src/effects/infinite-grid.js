@@ -37,6 +37,11 @@ export function mountInfiniteGrid(el, config) {
   // Aim assist slowdown: input moves the grid less while a card is targeted,
   // and less again while zoomed in, so aim stays steady down the sights.
   const sticky = () => (target ? 1 - config.aim.stickiness : 1) / ads.k;
+  // Keys have their own zoomed speed, blended in as the zoom eases in.
+  const keySticky = () => {
+    const zoomedIn = config.ads.zoom > 1 ? Math.min(1, (ads.k - 1) / (config.ads.zoom - 1)) : 0;
+    return (target ? 1 - config.aim.stickiness : 1) * (1 + (config.ads.keySpeed - 1) * zoomedIn);
+  };
 
   el.addEventListener('contextmenu', (e) => e.preventDefault());
   el.addEventListener('pointerdown', (e) => {
@@ -165,8 +170,8 @@ export function mountInfiniteGrid(el, config) {
         ky += KEYS[key][1];
       }
       const len = Math.hypot(kx, ky) || 1; // diagonals aren't faster
-      velocity.x = (kx / len) * motion.keySpeed * sticky();
-      velocity.y = (ky / len) * motion.keySpeed * sticky();
+      velocity.x = (kx / len) * motion.keySpeed * keySticky();
+      velocity.y = (ky / len) * motion.keySpeed * keySticky();
       touched();
     }
 
