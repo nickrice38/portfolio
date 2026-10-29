@@ -5,11 +5,13 @@ import { applyEffects } from '../src/effects/apply.js';
 import { mountInfiniteGrid } from '../src/effects/infinite-grid.js';
 import { mountCrosshair } from '../src/effects/crosshair.js';
 import { mountShot } from '../src/effects/shot.js';
+import { mountScorePopup } from '../src/effects/score-popup.js';
 import { mountPauseMenu } from '../src/effects/pause-menu.js';
 import { MENU_ITEMS } from '../src/menu.js';
 import '../src/effects/infinite-grid.css';
 import '../src/effects/crosshair.css';
 import '../src/effects/shot.css';
+import '../src/effects/score-popup.css';
 import '../src/effects/pause-menu.css';
 import './panel.css';
 
@@ -71,6 +73,22 @@ const TIPS = {
   Tighten: 'How much the crosshair closes in when on a card. 1 means no change, lower pulls tighter.',
   'Show name': 'Show the targeted project\'s name under the crosshair, like a nametag.',
   Assist: 'Ready-made aim assist feels, from Off to Lock-on. Pick one, then fine-tune below.',
+  'Show score': 'Turn the +500 pop-up on or off.',
+  Font: 'Typeface for the pop-up. Michroma is closest to the wide MW2 look.',
+  'Score colour': 'Colour of the pop-up text.',
+  'Text size': 'Size of the points, in pixels. The label scales with it.',
+  Weight: 'How bold the points are (some fonts only come in one weight).',
+  Shadow: 'Dark shadow behind the text so yellow stays readable on light cards. 0 for none.',
+  Height: 'How far above the crosshair the pop-up appears, in pixels.',
+  Pop: 'How big it starts before snapping to size. Higher is punchier.',
+  Hold: 'How long it stays readable before floating away, in milliseconds.',
+  Rise: 'How far it floats up as it fades, in pixels.',
+  'Headshot pts': 'Points for a shot near the middle of a card.',
+  'Hit pts': 'Points for a shot nearer the edge of a card.',
+  'Headshot zone': 'How close to the middle counts as a headshot. 0.35 is the middle third or so; 1 makes every shot a headshot.',
+  'Show label': 'Show HEADSHOT or HIT under the points.',
+  Stack: 'Quick shots in a row add up into one rising total, like a multi-kill.',
+  'Stack window': 'How soon the next shot has to land to keep stacking, in milliseconds.',
   Mode: 'How you aim. Drag: click and drag the grid. Joystick: move the mouse away from the centre to steer. Mouse look: the cursor locks and the mouse turns the view, like a shooter.',
   'Dead zone': 'The calm circle in the middle. While the mouse is inside it, nothing moves.',
   'Top speed': 'How fast the grid moves with the mouse at the very edge.',
@@ -114,6 +132,7 @@ const canvas = document.querySelector('.canvas');
 const gridApi = mountInfiniteGrid(canvas, config);
 mountCrosshair(canvas, gridApi, config);
 mountShot(canvas, gridApi, config);
+mountScorePopup(canvas, config);
 const menu = mountPauseMenu(canvas, gridApi, config, MENU_ITEMS);
 
 const pane = new Pane({ container: document.querySelector('.panel') });
@@ -158,7 +177,7 @@ function load(values) {
 }
 
 // Card
-const { grid, home, warp, crosshair, aim, shot, control, motion, colour } = config;
+const { grid, home, warp, crosshair, aim, shot, score, control, motion, colour } = config;
 const card = pane.addFolder({ title: 'Card' });
 card.addBinding(grid, 'cardWidth', { label: 'Width', min: 40, max: 800, step: 1 });
 card
@@ -269,6 +288,31 @@ const shotFolder = pane.addFolder({ title: 'Shot' });
 shotFolder.addBinding(shot, 'recoil', { label: 'Recoil', min: 0, max: 30, step: 1 });
 shotFolder.addBinding(shot, 'delay', { label: 'Zoom delay', min: 0, max: 400, step: 10 });
 shotFolder.addBinding(shot, 'zoomDuration', { label: 'Zoom time', min: 100, max: 1500, step: 10 });
+
+// Score
+const scoreFolder = pane.addFolder({ title: 'Score pop-up' });
+scoreFolder.addBinding(score, 'enabled', { label: 'Show score' });
+scoreFolder.addBinding(score, 'font', { label: 'Font', options: { Michroma: 'michroma', Orbitron: 'orbitron', Inter: 'inter' } });
+scoreFolder.addBinding(score, 'colour', { label: 'Score colour' });
+scoreFolder.addBinding(score, 'size', { label: 'Text size', min: 20, max: 120, step: 1 });
+scoreFolder.addBinding(score, 'weight', { label: 'Weight', min: 400, max: 900, step: 100 });
+scoreFolder.addBinding(score, 'shadow', { label: 'Shadow', min: 0, max: 2, step: 0.05 });
+scoreFolder.addBinding(score, 'offset', { label: 'Height', min: 0, max: 300, step: 1 });
+scoreFolder.addBinding(score, 'popScale', { label: 'Pop', min: 1, max: 2, step: 0.01 });
+scoreFolder.addBinding(score, 'hold', { label: 'Hold', min: 200, max: 2000, step: 10 });
+scoreFolder.addBinding(score, 'rise', { label: 'Rise', min: 0, max: 150, step: 1 });
+scoreFolder.addBinding(score, 'headshotPoints', { label: 'Headshot pts', min: 0, max: 2000, step: 50 });
+scoreFolder.addBinding(score, 'hitPoints', { label: 'Hit pts', min: 0, max: 2000, step: 50 });
+scoreFolder.addBinding(score, 'headshotRadius', { label: 'Headshot zone', min: 0, max: 1, step: 0.01 });
+scoreFolder.addBinding(score, 'showLabel', { label: 'Show label' });
+scoreFolder.addBinding(score, 'stack', { label: 'Stack' });
+scoreFolder.addBinding(score, 'stackWindow', { label: 'Stack window', min: 200, max: 5000, step: 50 });
+scoreFolder.addButton({ title: 'Preview headshot' }).on('click', () =>
+  canvas.dispatchEvent(new CustomEvent('shoot', { detail: { precision: 0, preview: true } })),
+);
+scoreFolder.addButton({ title: 'Preview hit' }).on('click', () =>
+  canvas.dispatchEvent(new CustomEvent('shoot', { detail: { precision: 1, preview: true } })),
+);
 
 // Control
 const controlFolder = pane.addFolder({ title: 'Control' });

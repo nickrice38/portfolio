@@ -1,0 +1,35 @@
+.score-popup {
+  position: fixed;
+  z-index: 30; /* above the project view so it lands on top of the zoom */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  color: var(--score-colour);
+  text-shadow:
+    0 calc(var(--score-shadow) * 2px) 0 rgb(0 0 0 / calc(var(--score-shadow) * 0.35)),
+    0 0 calc(var(--score-shadow) * 12px) rgb(0 0 0 / calc(var(--score-shadow) * 0.25));
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transform: translate(-50%, -50%);
+}
+
+.score-popup__points {
+  font-size: calc(var(--score-size) * 1px);
+  font-weight: var(--score-weight);
+  line-height: 1;
+  letter-spacing: 0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+.score-popup__label {
+  font-size: calc(var(--score-size) * 0.28px);
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.score-popup[data-font="michroma"] { font-family: "Michroma", sans-serif; }
+.score-popup[data-font="orbitron"] { font-family: "Orbitron", sans-serif; }
+.score-popup[data-font="inter"] { font-family: "Inter", system-ui, sans-serif; }

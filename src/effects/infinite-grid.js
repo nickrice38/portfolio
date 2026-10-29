@@ -231,6 +231,8 @@ export function mountInfiniteGrid(el, config) {
     if (key !== target?.key) {
       target = key && { key, col: nearCol, row: nearRow, project: projectAt(nearCol, nearRow, grid.projectCount) };
     }
+    // How far the crosshair is from the target's centre: 0 dead centre, 1 at the edge.
+    if (target) target.precision = Math.max(Math.abs(nearDx) / (w / 2), Math.abs(nearDy) / (h / 2));
     if (target) lifts.set(target.key, lifts.get(target.key) ?? 0);
     for (const [k, v] of lifts) {
       const next = v + ((k === target?.key ? 1 : 0) - v) * (reduced.matches ? 1 : 0.2);
