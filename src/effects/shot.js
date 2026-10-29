@@ -6,7 +6,7 @@ export function mountShot(gridEl, grid, config) {
   let open = null;
 
   gridEl.addEventListener('shoot', ({ detail }) => {
-    if (open || !detail.element) return;
+    if (open || !detail.element || detail.preview) return; // playground test shots don't open projects
     const motion = !reduced.matches;
     if (motion && config.shot.recoil) {
       gridEl.animate(

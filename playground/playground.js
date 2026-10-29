@@ -2,12 +2,14 @@ import { Pane } from 'tweakpane';
 import saved from '../src/effects.config.json';
 import savedPresets from '../src/effects.presets.json';
 import { applyEffects } from '../src/effects/apply.js';
+import { AIM_ASSISTS, WARPS } from '../src/effects/presets.js';
 import { mountInfiniteGrid } from '../src/effects/infinite-grid.js';
 import { mountCrosshair } from '../src/effects/crosshair.js';
 import { mountShot } from '../src/effects/shot.js';
 import { mountScorePopup } from '../src/effects/score-popup.js';
 import { mountHud } from '../src/effects/hud.js';
 import { mountImpact } from '../src/effects/impact.js';
+import { mountBulletHoles } from '../src/effects/bullet-holes.js';
 import { mountPauseMenu } from '../src/effects/pause-menu.js';
 import { MENU_ITEMS } from '../src/menu.js';
 import '../src/effects/infinite-grid.css';
@@ -34,29 +36,6 @@ const ASPECT_RATIOS = {
 };
 const CUSTOM = 'Custom';
 
-// Aim assist presets. Target fill is left alone so colours stay your own.
-const AIM_ASSISTS = {
-  Off: { stickiness: 0, settle: 0, settleDelay: 0, liftScale: 1 },
-  'Free look': { stickiness: 0.15, settle: 0, settleDelay: 0, liftScale: 1.02 },
-  Gentle: { stickiness: 0.25, settle: 0.06, settleDelay: 300, liftScale: 1.03 },
-  Console: { stickiness: 0.45, settle: 0.12, settleDelay: 160, liftScale: 1.04 },
-  Magnetic: { stickiness: 0.65, settle: 0.22, settleDelay: 60, liftScale: 1.06 },
-  'Lock-on': { stickiness: 0.85, settle: 0.4, settleDelay: 0, liftScale: 1.1 },
-  'Slow drift': { stickiness: 0.3, settle: 0.03, settleDelay: 500, liftScale: 1.04 },
-};
-
-const WARPS = {
-  Flat: { amount: 0, axis: 'horizontal' },
-  'Subtle curve': { amount: 0.25, axis: 'horizontal' },
-  'Cylinder': { amount: 0.55, axis: 'horizontal' },
-  'Deep cylinder': { amount: 0.9, axis: 'horizontal' },
-  'Vertical tube': { amount: 0.6, axis: 'vertical' },
-  Bowl: { amount: 0.5, axis: 'both' },
-  Tunnel: { amount: 0.9, axis: 'both' },
-  'Subtle bulge': { amount: -0.25, axis: 'horizontal' },
-  Drum: { amount: -0.6, axis: 'horizontal' },
-  Globe: { amount: -0.6, axis: 'both' },
-};
 
 // Plain-language help shown when hovering a control's label, keyed by label.
 const TIPS = {
@@ -84,6 +63,12 @@ const TIPS = {
   'Flash strength': 'How bright the headshot flash gets. Keep it low; it should be felt more than seen.',
   'Camera punch': 'How much the view kicks forward on a shot. Headshots get the full amount, hits get half. 1 is off.',
   'Colour split': 'Red and cyan edges flash on the hit card, like a damage glitch, in pixels. 0 is off.',
+  'Bullet holes': 'Each shot knocks a hole where the crosshair was, through every copy of that project, as a "seen it" marker.',
+  'Hole size': 'How big each hole is, in pixels.',
+  Rim: 'How far the darker torn rim and cracks spread around the hole. 0 for a clean hole.',
+  'Holes per project': 'Most holes a project can carry; the oldest disappears when a new one lands.',
+  'Stay forever': 'Keep holes for the whole visit. Off: they vanish after the lifetime below.',
+  'Hole lifetime': 'How long holes last when Stay forever is off, in milliseconds.',
   'Show score': 'Turn the +500 pop-up on or off.',
   Font: 'Typeface for the pop-up. Michroma is closest to the wide MW2 look.',
   'Score colour': 'Colour of the pop-up text.',
@@ -172,6 +157,7 @@ mountShot(canvas, gridApi, config);
 const scorePopup = mountScorePopup(canvas, config);
 mountHud(canvas, config);
 mountImpact(canvas, config);
+const bulletHoles = mountBulletHoles(canvas, config);
 const menu = mountPauseMenu(canvas, gridApi, config, MENU_ITEMS);
 
 const pane = new Pane({ container: document.querySelector('.panel') });
@@ -216,7 +202,7 @@ function load(values) {
 }
 
 // Card
-const { grid, home, warp, crosshair, aim, ads, shot, impact, score, hud, control, motion, lanes, colour } = config;
+const { grid, home, warp, crosshair, aim, ads, shot, impact, holes, score, hud, control, motion, lanes, colour } = config;
 const card = pane.addFolder({ title: 'Card' });
 card.addBinding(grid, 'cardWidth', { label: 'Width', min: 40, max: 800, step: 1 });
 card
@@ -350,6 +336,16 @@ impactFolder.addButton({ title: 'Test headshot' }).on('click', () =>
 impactFolder.addButton({ title: 'Test hit' }).on('click', () =>
   canvas.dispatchEvent(new CustomEvent('shoot', { detail: { ...gridApi.target, precision: 1, preview: true } })),
 );
+
+// Bullet holes
+const holesFolder = pane.addFolder({ title: 'Bullet holes' });
+holesFolder.addBinding(holes, 'enabled', { label: 'Bullet holes' });
+holesFolder.addBinding(holes, 'size', { label: 'Hole size', min: 6, max: 80, step: 1 });
+holesFolder.addBinding(holes, 'rim', { label: 'Rim', min: 0, max: 2, step: 0.05 });
+holesFolder.addBinding(holes, 'max', { label: 'Holes per project', min: 1, max: 10, step: 1 });
+holesFolder.addBinding(holes, 'persist', { label: 'Stay forever' });
+holesFolder.addBinding(holes, 'life', { label: 'Hole lifetime', min: 500, max: 20000, step: 100 });
+holesFolder.addButton({ title: 'Clear holes' }).on('click', () => bulletHoles.clear());
 
 // Score
 const scoreFolder = pane.addFolder({ title: 'Score pop-up' });

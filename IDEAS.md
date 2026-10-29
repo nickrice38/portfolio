@@ -26,6 +26,8 @@ Tick them off as they land.
 - [x] Faint white screen flash on a headshot (~120ms), plus camera punch and colour split
 - [x] Moving lanes: rows slide sideways shooting-gallery style (try-out, may revert)
 - [ ] Mouse sway: the grid shifts a few pixels with mouse movement
+- [x] Bullet holes: see-through jagged hole where each shot lands, on every copy of that project
+- [ ] Persist bullet holes across visits (localStorage) as a "seen it" history
 - [ ] Depth shading: cards darken or fade as the warp curves them away
 - [ ] Warp only while dragging, flat at rest
 - [ ] Pinch / ctrl+scroll zoom towards the pointer
@@ -35,7 +37,14 @@ Tick them off as they land.
 ## Menu and content
 - [ ] Decide the menu items (src/menu.js) and wire each one up
 - [ ] Projects: a plain list view, the escape hatch for recruiters in a hurry
-- [ ] Settings: let visitors pick control mode and aim assist, like a game
+- [ ] Settings screen in the pause menu (build on the real site, not the playground).
+      Game-style categories with ◀ VALUE ▶ pickers and sliders, saved per visitor:
+      - Controls: control mode, sensitivity, aim down sights (Hold / Toggle, already supported)
+      - Aim: aim assist preset, moving targets on/off, lane speed
+      - Crosshair: style, size, colour, on-target colour, show project names
+      - Display: warp (Flat / Subtle curve / Cylinder / Bowl), score & HUD on/off
+      - Audio: sound effects, volume
+      - Accessibility: reduce motion, reduce flashing
 - [ ] About / Contact as panels inside the menu gap
 - [ ] Real project view to replace the placeholder shot
 - [ ] Real project data and images on the cards

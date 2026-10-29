@@ -68,3 +68,14 @@
 .infinite-grid.is-locked {
   cursor: none;
 }
+
+/* Bullet hole rims (set per card by bullet-holes.js). The card's mask cuts
+   the hole itself, and clips this layer too. */
+.infinite-grid__card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--holes-rim, none);
+  border-radius: inherit;
+  pointer-events: none;
+}

@@ -66,7 +66,8 @@
     "zoom": 1.8,
     "inTime": 450,
     "outTime": 160,
-    "keySpeed": 0.5
+    "keySpeed": 0.5,
+    "toggle": false
   },
   "shot": {
     "recoil": 6,
@@ -81,6 +82,14 @@
     "flashStrength": 0.35,
     "punch": 1.03,
     "split": 6
+  },
+  "holes": {
+    "enabled": true,
+    "size": 22,
+    "rim": 0.6,
+    "max": 3,
+    "persist": true,
+    "life": 6000
   },
   "score": {
     "enabled": true,

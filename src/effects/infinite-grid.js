@@ -40,12 +40,25 @@ export function mountInfiniteGrid(el, config) {
   // Aim down sights: hold right-click or Shift to zoom in on the crosshair.
   // `k` is the current zoom, tweened slowly in and quickly out.
   const ads = { k: 1, from: 1, to: 1, start: 0, duration: 1, held: new Set() };
-  const aimDown = (source, on) => {
-    if (on ? ads.held.has(source) : !ads.held.has(source)) return;
-    on ? ads.held.add(source) : ads.held.delete(source);
+  const retargetAds = () => {
     const to = ads.held.size && !paused ? config.ads.zoom : 1;
     if (to === ads.to) return;
     Object.assign(ads, { from: ads.k, to, start: performance.now(), duration: to > 1 ? config.ads.inTime : config.ads.outTime });
+  };
+  const aimDown = (source, on) => {
+    if (config.ads.toggle) {
+      // Toggle mode: each press flips it; releases do nothing.
+      if (!on) return;
+      ads.held.has('toggle') ? ads.held.delete('toggle') : ads.held.add('toggle');
+    } else {
+      if (on === ads.held.has(source)) return;
+      on ? ads.held.add(source) : ads.held.delete(source);
+    }
+    retargetAds();
+  };
+  const aimRelease = () => {
+    ads.held.clear();
+    retargetAds();
   };
   // Aim assist slowdown: input moves the grid less while a card is targeted,
   // and less again while zoomed in, so aim stays steady down the sights.
@@ -149,7 +162,7 @@ export function mountInfiniteGrid(el, config) {
   addEventListener('keydown', (e) => {
     const key = e.key.toLowerCase();
     if (paused || typing(e) || e.metaKey || e.ctrlKey || e.altKey) return;
-    if (key === 'shift') return aimDown('shift', true);
+    if (key === 'shift') return e.repeat || aimDown('shift', true);
     if ((key === ' ' || key === 'enter') && target) {
       e.preventDefault();
       el.dispatchEvent(new CustomEvent('shoot', { detail: target }));
@@ -166,8 +179,7 @@ export function mountInfiniteGrid(el, config) {
   });
   addEventListener('blur', () => {
     held.clear();
-    aimDown('shift', false);
-    aimDown('mouse', false);
+    aimRelease();
   });
 
   const reduced = matchMedia('(prefers-reduced-motion: reduce)');
@@ -313,7 +325,12 @@ export function mountInfiniteGrid(el, config) {
       target = key && { key, col: nearCol, row: nearRow, project: projectAt(nearCol, nearRow, grid.projectCount) };
     }
     // How far the crosshair is from the target's centre: 0 dead centre, 1 at the edge.
-    if (target) target.precision = Math.max(Math.abs(nearDx) / (w / 2), Math.abs(nearDy) / (h / 2));
+    if (target) {
+      target.precision = Math.max(Math.abs(nearDx) / (w / 2), Math.abs(nearDy) / (h / 2));
+      // Where on the card the crosshair is: 0..1 from its left / top edge.
+      target.hitU = 0.5 - nearDx / w;
+      target.hitV = 0.5 - nearDy / h;
+    }
     if (target) lifts.set(target.key, lifts.get(target.key) ?? 0);
     for (const [k, v] of lifts) {
       const next = v + ((k === target?.key ? 1 : 0) - v) * (reduced.matches ? 1 : 0.2);
@@ -367,6 +384,8 @@ export function mountInfiniteGrid(el, config) {
         card.style.setProperty('--lift', lift);
         card.style.opacity = shown;
         card.classList.toggle('is-target', cellKey === target?.key);
+        const project = String(projectAt(col, row, grid.projectCount));
+        if (card.dataset.project !== project) card.dataset.project = project;
         if (cellKey === target?.key) target.element = card;
         card.hidden = false;
       }
@@ -393,10 +412,7 @@ export function mountInfiniteGrid(el, config) {
     },
     pause: (value) => {
       paused = value;
-      if (value) {
-        aimDown('shift', false);
-        aimDown('mouse', false);
-      }
+      if (value) aimRelease();
       if (value && locked()) document.exitPointerLock();
       held.clear();
       velocity.x = velocity.y = 0;
