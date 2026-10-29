@@ -19,8 +19,9 @@ export function mountHud(gridEl, config) {
   const medal = document.createElement('div');
   medal.className = 'hud-medal';
   medal.innerHTML = '<span class="hud-medal__eyebrow"></span><span class="hud-medal__title"></span>';
-  for (const el of [counter, feed, medal]) el.setAttribute('aria-hidden', 'true');
-  document.body.append(counter, feed, medal);
+  const edges = ['top', 'bottom'].map(progressiveBlur);
+  for (const el of [counter, feed, medal, ...edges]) el.setAttribute('aria-hidden', 'true');
+  document.body.append(...edges, counter, feed, medal);
 
   const scoreEl = counter.querySelector('.hud-counter__score');
   const projectsEl = counter.querySelector('.hud-counter__projects');
@@ -95,6 +96,13 @@ export function mountHud(gridEl, config) {
     feed.style.bottom = `${innerHeight - r.bottom + 24}px`;
     medal.style.left = `${r.left + r.width / 2}px`;
     medal.style.top = `${r.top + 72}px`;
+    for (const edge of edges) {
+      edge.hidden = !config.hud.edgeBlur;
+      edge.style.left = `${r.left}px`;
+      edge.style.width = `${r.width}px`;
+    }
+    edges[0].style.top = `${r.top}px`;
+    edges[1].style.bottom = `${innerHeight - r.bottom}px`;
     counter.hidden = !config.hud.counter;
     if (shown !== total) {
       shown = reduced.matches ? total : Math.min(total, shown + Math.max(1, Math.ceil((total - shown) * 0.15)));
@@ -103,6 +111,30 @@ export function mountHud(gridEl, config) {
     requestAnimationFrame(sync);
   };
   sync();
+}
+
+// Apple-style progressive blur along one edge: stacked backdrop blurs, each
+// stronger than the last and masked to a slightly later band, so the blur
+// ramps up smoothly towards the edge with no visible line.
+const BLUR_LAYERS = 6;
+function progressiveBlur(side) {
+  const strip = document.createElement('div');
+  strip.className = `edge-blur edge-blur--${side}`;
+  for (let i = 0; i < BLUR_LAYERS; i++) {
+    const layer = document.createElement('div');
+    const step = 100 / (BLUR_LAYERS + 1);
+    const stops = [i * step, (i + 1) * step, (i + 2) * step, (i + 3) * step].map((n) => `${Math.min(100, n)}%`);
+    // Doubling blur per layer, relative to the strongest at the very edge.
+    layer.style.setProperty('--f', 2 ** (i - (BLUR_LAYERS - 1)));
+    layer.style.setProperty(
+      '--mask',
+      i === BLUR_LAYERS - 1
+        ? `linear-gradient(var(--dir), transparent ${stops[0]}, #000 ${stops[1]})`
+        : `linear-gradient(var(--dir), transparent ${stops[0]}, #000 ${stops[1]}, #000 ${stops[2]}, transparent ${stops[3]})`,
+    );
+    strip.append(layer);
+  }
+  return strip;
 }
 
 function crosshairIcon() {

@@ -103,7 +103,7 @@
 
 .pause-hud {
   position: fixed;
-  z-index: 10;
+  z-index: 12; /* above the edge blur */
   margin: 0;
   pointer-events: none;
   transition: opacity 200ms ease-out;

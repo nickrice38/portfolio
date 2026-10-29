@@ -102,7 +102,11 @@
     "feedMax": 5,
     "feedHold": 4000,
     "medals": true,
-    "medalHold": 2600
+    "medalHold": 2600,
+    "edgeBlur": true,
+    "blurHeight": 140,
+    "blurStrength": 16,
+    "blurTint": 0.4
   },
   "colour": {
     "background": "#f4f4f2",

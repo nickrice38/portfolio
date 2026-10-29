@@ -105,3 +105,31 @@
 .is-menu-open .hud-feed {
   opacity: 0;
 }
+
+/* Progressive edge blur behind the HUD. Each layer blurs a little more and
+   is masked to a later band, so the blur fades in towards the edge. */
+.edge-blur {
+  position: fixed;
+  z-index: 11; /* above the grid and crosshair, below the HUD text */
+  height: calc(var(--hud-blur-height) * 1px);
+  pointer-events: none;
+}
+
+.edge-blur--top {
+  --dir: to top;
+  background: linear-gradient(to bottom, color-mix(in srgb, var(--colour-background) calc(var(--hud-blur-tint) * 100%), transparent), transparent);
+}
+
+.edge-blur--bottom {
+  --dir: to bottom;
+  background: linear-gradient(to top, color-mix(in srgb, var(--colour-background) calc(var(--hud-blur-tint) * 100%), transparent), transparent);
+}
+
+.edge-blur > div {
+  position: absolute;
+  inset: 0;
+  backdrop-filter: blur(calc(var(--hud-blur-strength) * var(--f) * 1px));
+  -webkit-backdrop-filter: blur(calc(var(--hud-blur-strength) * var(--f) * 1px));
+  mask-image: var(--mask);
+  -webkit-mask-image: var(--mask);
+}

@@ -109,6 +109,10 @@ const TIPS = {
   'Stop on target': 'The lane you\'re aiming at glides to a stop so you can read and shoot the card.',
   'Stop ease': 'How quickly lanes stop and start. Lower is gentler.',
   'Realign on pause': 'When you open the menu, the lanes glide back into line so the gap is clean.',
+  'Edge blur': 'A soft, fading blur along the top and bottom edges behind the HUD, like Apple\'s toolbars.',
+  'Blur height': 'How far the blur reaches in from the edge, in pixels.',
+  'Blur strength': 'How blurry it gets right at the edge. It fades to sharp further in.',
+  'Blur tint': 'A faint wash of the background colour in the blur, to help text read. 0 for pure blur.',
   Mode: 'How you aim. Drag: click and drag the grid. Joystick: move the mouse away from the centre to steer. Mouse look: the cursor locks and the mouse turns the view, like a shooter.',
   'Dead zone': 'The calm circle in the middle. While the mouse is inside it, nothing moves.',
   'Top speed': 'How fast the grid moves with the mouse at the very edge.',
@@ -363,6 +367,10 @@ hudFolder.addBinding(hud, 'feedMax', { label: 'Feed lines', min: 1, max: 10, ste
 hudFolder.addBinding(hud, 'feedHold', { label: 'Feed time', min: 1000, max: 10000, step: 100 });
 hudFolder.addBinding(hud, 'medals', { label: 'Streak medals' });
 hudFolder.addBinding(hud, 'medalHold', { label: 'Medal time', min: 1000, max: 6000, step: 100 });
+hudFolder.addBinding(hud, 'edgeBlur', { label: 'Edge blur' });
+hudFolder.addBinding(hud, 'blurHeight', { label: 'Blur height', min: 40, max: 400, step: 1 });
+hudFolder.addBinding(hud, 'blurStrength', { label: 'Blur strength', min: 0, max: 64, step: 1 });
+hudFolder.addBinding(hud, 'blurTint', { label: 'Blur tint', min: 0, max: 1, step: 0.01 });
 
 // Control
 const controlFolder = pane.addFolder({ title: 'Control' });
