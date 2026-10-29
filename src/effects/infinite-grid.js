@@ -245,14 +245,14 @@ export function mountInfiniteGrid(el, config) {
     hole.open = hole.from + (hole.to - hole.from) * ease((performance.now() - hole.start) / transition);
     const holeActive = hole.open > 0.001;
 
-    // Lanes: advance the shared clock, easing to a stop while paused, in the menu
-    // or zoomed in, and holding the targeted card's lane still.
+    // Lanes: advance the shared clock, easing to a stop while paused or in the
+    // menu, and holding the targeted card's lane still (zoomed in or not).
     {
       const L = config.lanes;
       const now = performance.now();
       const dt = Math.min(0.05, (now - lanes.last) / 1000);
       lanes.last = now;
-      const moving = L.enabled && !paused && !holeActive && !reduced.matches && ads.k < 1.02;
+      const moving = L.enabled && !paused && !holeActive && !reduced.matches;
       lanes.speed += ((moving ? 1 : 0) - lanes.speed) * L.stopEase;
       const step = (L.speed * dt * lanes.speed) / pitchX;
       lanes.t += step;
