@@ -1,4 +1,4 @@
-// Shot impact: a hitmarker tick (plus a ding on a headshot), a faint white
+// Shot impact: a hitmarker "thwap" (plus a ding on a headshot), a faint white
 // flash on headshots, a small camera punch and a red/cyan colour split on the
 // hit card. Sounds are synthesised with Web Audio, so there are no files.
 export function mountImpact(gridEl, config) {
@@ -42,6 +42,16 @@ export function mountImpact(gridEl, config) {
     }
   });
 
+  // A short buffer of white noise, made once and reused for every hit.
+  let noise;
+  function noiseBuffer() {
+    if (noise) return noise;
+    noise = audio.createBuffer(1, Math.ceil(audio.sampleRate * 0.1), audio.sampleRate);
+    const data = noise.getChannelData(0);
+    for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1;
+    return noise;
+  }
+
   function playHit(headshot, volume) {
     audio ??= new AudioContext();
     const now = audio.currentTime;
@@ -49,17 +59,35 @@ export function mountImpact(gridEl, config) {
     out.gain.value = volume;
     out.connect(audio.destination);
 
-    // Hitmarker: a short, bright tick.
-    const tick = audio.createOscillator();
-    const tickGain = audio.createGain();
-    tick.type = 'square';
-    tick.frequency.setValueAtTime(2400, now);
-    tick.frequency.exponentialRampToValueAtTime(900, now + 0.03);
-    tickGain.gain.setValueAtTime(0.25, now);
-    tickGain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
-    tick.connect(tickGain).connect(out);
-    tick.start(now);
-    tick.stop(now + 0.06);
+    // Hitmarker "thwap", OG CoD style: a burst of noise, band-passed into the
+    // upper mids with a falling sweep, snapping on instantly and gone in ~60ms...
+    const pitch = config.impact.hitPitch;
+    const noise = audio.createBufferSource();
+    noise.buffer = noiseBuffer();
+    const band = audio.createBiquadFilter();
+    band.type = 'bandpass';
+    band.Q.value = 1.4;
+    band.frequency.setValueAtTime(3200 * pitch, now);
+    band.frequency.exponentialRampToValueAtTime(1100 * pitch, now + 0.05);
+    const snap = audio.createGain();
+    snap.gain.setValueAtTime(0.0001, now);
+    snap.gain.exponentialRampToValueAtTime(0.9, now + 0.002);
+    snap.gain.exponentialRampToValueAtTime(0.001, now + 0.06);
+    noise.connect(band).connect(snap).connect(out);
+    noise.start(now);
+    noise.stop(now + 0.07);
+
+    // ...with a tiny low thump underneath for body.
+    const thump = audio.createOscillator();
+    const thumpGain = audio.createGain();
+    thump.type = 'sine';
+    thump.frequency.setValueAtTime(220 * pitch, now);
+    thump.frequency.exponentialRampToValueAtTime(90 * pitch, now + 0.04);
+    thumpGain.gain.setValueAtTime(0.5, now);
+    thumpGain.gain.exponentialRampToValueAtTime(0.001, now + 0.045);
+    thump.connect(thumpGain).connect(out);
+    thump.start(now);
+    thump.stop(now + 0.05);
 
     if (!headshot) return;
     // Headshot: a metallic ding, two detuned sines ringing out.

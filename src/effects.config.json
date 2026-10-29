@@ -76,6 +76,7 @@
   "impact": {
     "sound": false,
     "volume": 0.4,
+    "hitPitch": 1,
     "flash": true,
     "flashStrength": 0.35,
     "punch": 1.03,

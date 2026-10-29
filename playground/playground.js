@@ -77,7 +77,8 @@ const TIPS = {
   Tighten: 'How much the crosshair closes in when on a card. 1 means no change, lower pulls tighter.',
   'Show name': 'Show the targeted project\'s name under the crosshair, like a nametag.',
   Assist: 'Ready-made aim assist feels, from Off to Lock-on. Pick one, then fine-tune below.',
-  Sound: 'Hitmarker tick on every shot, plus a ding on headshots. Off by default so visitors aren\'t surprised.',
+  Sound: 'Hitmarker thwap on every shot, plus a ding on headshots. Off by default so visitors aren\'t surprised.',
+  'Hit pitch': 'Character of the hitmarker thwap. Lower is chunkier and duller, higher is snappier and more papery.',
   Volume: 'How loud the hit sounds are.',
   'Headshot flash': 'A quick, faint white flash over the screen when you land a headshot.',
   'Flash strength': 'How bright the headshot flash gets. Keep it low; it should be felt more than seen.',
@@ -338,6 +339,7 @@ shotFolder.addBinding(shot, 'zoomDuration', { label: 'Zoom time', min: 100, max:
 const impactFolder = pane.addFolder({ title: 'Impact' });
 impactFolder.addBinding(impact, 'sound', { label: 'Sound' });
 impactFolder.addBinding(impact, 'volume', { label: 'Volume', min: 0, max: 1, step: 0.01 });
+impactFolder.addBinding(impact, 'hitPitch', { label: 'Hit pitch', min: 0.5, max: 2, step: 0.01 });
 impactFolder.addBinding(impact, 'flash', { label: 'Headshot flash' });
 impactFolder.addBinding(impact, 'flashStrength', { label: 'Flash strength', min: 0, max: 1, step: 0.01 });
 impactFolder.addBinding(impact, 'punch', { label: 'Camera punch', min: 1, max: 1.15, step: 0.005 });
