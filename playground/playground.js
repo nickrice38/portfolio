@@ -102,7 +102,7 @@ const TIPS = {
   Canvas: 'The background colour behind the cards.',
   Card: 'The fill colour of every card.',
   Name: 'Type a name, then save the current settings as a preset.',
-  Load: 'Switch to a saved preset to compare directions.',
+  Preset: 'Your saved presets. Pick one to switch to it, or press Load preset to re-apply the one shown.',
 };
 
 const clone = (o) => structuredClone(o);
@@ -309,17 +309,22 @@ pane.on('change', () => applyEffects(config));
 // Presets
 const presetFolder = pane.addFolder({ title: 'Presets' });
 let presetList;
+let loadBtn;
 function renderPresetList() {
   presetList?.dispose();
+  loadBtn?.dispose();
   const names = Object.keys(presets);
   if (!names.length) return;
-  ui.preset ||= names[0];
+  if (!presets[ui.preset]) ui.preset = names[0];
   presetList = presetFolder.addBinding(ui, 'preset', {
-    label: 'Load',
+    label: 'Preset',
     options: Object.fromEntries(names.map((n) => [n, n])),
     index: 0,
   });
   presetList.on('change', ({ value }) => load(presets[value]));
+  // The dropdown only fires when the choice changes, so this re-applies the shown one.
+  loadBtn = presetFolder.addButton({ title: 'Load preset', index: 1 });
+  loadBtn.on('click', () => load(presets[ui.preset]));
 }
 presetFolder.addBinding(ui, 'presetName', { label: 'Name' });
 presetFolder.addButton({ title: 'Save as preset' }).on('click', async () => {

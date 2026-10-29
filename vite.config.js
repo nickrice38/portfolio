@@ -34,6 +34,8 @@ const effectsWriter = {
 
 export default defineConfig({
   plugins: [effectsWriter],
+  // Saving a preset shouldn't reload the playground and wipe unsaved tweaks.
+  server: { watch: { ignored: ['**/src/effects.presets.json'] } },
   build: {
     // Only the real site is built; playground/ never reaches dist/.
     rollupOptions: { input: resolve('index.html') },
