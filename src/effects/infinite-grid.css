@@ -21,8 +21,8 @@
   will-change: transform;
 }
 
-/* Targeted card: a soft shadow that grows with --lift (0..1). */
-.infinite-grid__card {
+/* Lifting card (targeted, or easing back): a soft shadow that grows with --lift (0..1). */
+.infinite-grid__card.is-lifted {
   box-shadow: 0 calc(var(--lift, 0) * 12px) calc(var(--lift, 0) * 32px) rgb(0 0 0 / calc(var(--lift, 0) * 0.18));
 }
 
@@ -71,7 +71,7 @@
 
 /* Bullet hole rims (set per card by bullet-holes.js). The card's mask cuts
    the hole itself, and clips this layer too. */
-.infinite-grid__card::after {
+.infinite-grid__card.has-holes::after {
   content: "";
   position: absolute;
   inset: 0;

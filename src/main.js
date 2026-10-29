@@ -25,5 +25,5 @@ mountShot(canvas, grid, config);
 mountScorePopup(canvas, config);
 mountHud(canvas, config);
 mountImpact(canvas, config);
-mountBulletHoles(canvas, config);
+mountBulletHoles(canvas, grid, config);
 mountPauseMenu(canvas, grid, config, MENU_ITEMS);

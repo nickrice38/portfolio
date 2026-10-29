@@ -1,3 +1,5 @@
+import { setStyle, trackRect } from './dom.js';
+
 // A game-style pause menu shown in the hole the grid clears. Play closes the
 // hole and hands control to the grid; Esc (or losing pointer lock) brings it back.
 export function mountPauseMenu(gridEl, grid, config, items) {
@@ -82,15 +84,15 @@ export function mountPauseMenu(gridEl, grid, config, items) {
   gridEl.addEventListener('unlock', () => !open && show());
 
   // Keep the menu sized to the hole and sitting in it, wherever it is on screen.
+  const r = trackRect(gridEl);
   const sync = () => {
-    const r = gridEl.getBoundingClientRect();
     const hole = grid.holeRect;
-    menu.style.left = `${r.left + hole.x + hole.width / 2}px`;
-    menu.style.top = `${r.top + hole.y + hole.height / 2}px`;
-    menu.style.width = `${grid.holeRect.width}px`;
-    menu.style.height = `${grid.holeRect.height}px`;
-    hud.style.right = `${innerWidth - r.right + 24}px`;
-    hud.style.top = `${r.top + 24}px`;
+    setStyle(menu, 'left', `${r.left + hole.x + hole.width / 2}px`);
+    setStyle(menu, 'top', `${r.top + hole.y + hole.height / 2}px`);
+    setStyle(menu, 'width', `${hole.width}px`);
+    setStyle(menu, 'height', `${hole.height}px`);
+    setStyle(hud, 'right', `${innerWidth - r.right + 24}px`);
+    setStyle(hud, 'top', `${r.top + 24}px`);
     requestAnimationFrame(sync);
   };
   sync();

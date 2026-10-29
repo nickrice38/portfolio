@@ -1,3 +1,5 @@
+import { setStyle, trackRect } from './dom.js';
+
 // Game HUD fed by the score pop-up's `score` events: a running score and
 // projects counter (top left), a kill feed (bottom left) and streak medals
 // when you've seen 3, 5 and 10 different projects.
@@ -92,35 +94,48 @@ export function mountHud(gridEl, config) {
     );
   }
 
+  // Element sizes, kept up to date by an observer so the patches below never
+  // have to measure anything per frame.
+  const sizes = new Map();
+  const sizer = new ResizeObserver((entries) => {
+    for (const e of entries) sizes.set(e.target, { w: e.borderBoxSize[0].inlineSize, h: e.borderBoxSize[0].blockSize });
+  });
+  const sizeOf = (el) => {
+    if (!el) return null;
+    if (!sizes.has(el)) {
+      sizes.set(el, { w: 0, h: 0 });
+      sizer.observe(el);
+    }
+    return sizes.get(el);
+  };
+
   // Follow the grid's edges (it may not fill the window), and tick the score up.
+  const r = trackRect(gridEl);
   const sync = () => {
-    const r = gridEl.getBoundingClientRect();
-    counter.style.left = `${r.left + 24}px`;
-    counter.style.top = `${r.top + 24}px`;
-    feed.style.left = `${r.left + 24}px`;
-    feed.style.bottom = `${innerHeight - r.bottom + 24}px`;
-    medal.style.left = `${r.left + r.width / 2}px`;
-    medal.style.top = `${r.top + 72}px`;
-    // Each patch covers its element plus `blurReach`, from the screen edge inwards,
-    // fading out vertically (progressive layers) and sideways (--hmask).
+    setStyle(counter, 'left', `${r.left + 24}px`);
+    setStyle(counter, 'top', `${r.top + 24}px`);
+    setStyle(feed, 'left', `${r.left + 24}px`);
+    setStyle(feed, 'bottom', `${innerHeight - r.bottom + 24}px`);
+    setStyle(medal, 'left', `${r.left + r.width / 2}px`);
+    setStyle(medal, 'top', `${r.top + 72}px`);
+    // Each patch covers its element (24px in from the grid's corner) plus
+    // `blurReach`, fading out vertically (progressive layers) and sideways (--hmask).
     const reach = config.hud.blurReach;
     for (const p of patches) {
       const target = p.of();
-      const box = target?.getBoundingClientRect();
-      const visible = config.hud.edgeBlur && box && box.width > 0 && box.height > 0 && !target.hidden;
-      p.el.hidden = !visible;
+      const size = sizeOf(target);
+      const visible = config.hud.edgeBlur && size && size.w > 0 && size.h > 0 && !target.hidden;
+      if (p.el.hidden !== !visible) p.el.hidden = !visible;
       if (!visible) continue;
-      const width = (p.align === 'left' ? box.right - r.left : r.right - box.left) + reach;
-      const height = (p.side === 'top' ? box.bottom - r.top : r.bottom - box.top) + reach;
-      Object.assign(p.el.style, {
-        width: `${width}px`,
-        height: `${height}px`,
-        left: p.align === 'left' ? `${r.left}px` : `${r.right - width}px`,
-        top: p.side === 'top' ? `${r.top}px` : `${r.bottom - height}px`,
-      });
-      p.el.style.setProperty('--hmask', `linear-gradient(to ${p.align === 'left' ? 'right' : 'left'}, #000 ${width - reach}px, transparent)`);
+      const width = 24 + size.w + reach;
+      const height = 24 + size.h + reach;
+      setStyle(p.el, 'width', `${width}px`);
+      setStyle(p.el, 'height', `${height}px`);
+      setStyle(p.el, 'left', p.align === 'left' ? `${r.left}px` : `${r.right - width}px`);
+      setStyle(p.el, 'top', p.side === 'top' ? `${r.top}px` : `${r.bottom - height}px`);
+      setStyle(p.el, '--hmask', `linear-gradient(to ${p.align === 'left' ? 'right' : 'left'}, #000 ${width - reach}px, transparent)`);
     }
-    counter.hidden = !config.hud.counter;
+    if (counter.hidden !== !config.hud.counter) counter.hidden = !config.hud.counter;
     if (shown !== total) {
       shown = reduced.matches ? total : Math.min(total, shown + Math.max(1, Math.ceil((total - shown) * 0.15)));
       scoreEl.textContent = shown.toLocaleString();

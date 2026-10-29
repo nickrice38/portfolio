@@ -1,3 +1,5 @@
+import { setStyle, trackRect } from './dom.js';
+
 // A fixed crosshair at the centre of the screen. Follows the grid's current
 // target to tighten and show the project name, and flashes a hitmarker on `shoot`.
 export function mountCrosshair(gridEl, grid, config) {
@@ -15,6 +17,7 @@ export function mountCrosshair(gridEl, grid, config) {
   const label = el.querySelector('.crosshair__label');
 
   let shown;
+  const r = trackRect(gridEl);
   const sync = () => {
     if (grid.target !== shown) {
       shown = grid.target;
@@ -22,11 +25,10 @@ export function mountCrosshair(gridEl, grid, config) {
       if (shown) label.textContent = `Project ${String(shown.project).padStart(2, '0')}`;
     }
     // Centre on the grid, which may not fill the window (e.g. beside the playground panel).
-    const r = gridEl.getBoundingClientRect();
-    el.style.left = `${r.left + r.width / 2}px`;
-    el.style.top = `${r.top + r.height / 2}px`;
-    el.dataset.style = config.crosshair.style;
-    el.classList.toggle('has-label', config.crosshair.showLabel);
+    setStyle(el, 'left', `${r.left + r.width / 2}px`);
+    setStyle(el, 'top', `${r.top + r.height / 2}px`);
+    if (el.dataset.style !== config.crosshair.style) el.dataset.style = config.crosshair.style;
+    if (el.classList.contains('has-label') !== config.crosshair.showLabel) el.classList.toggle('has-label', config.crosshair.showLabel);
     requestAnimationFrame(sync);
   };
   sync();

@@ -157,7 +157,9 @@ mountShot(canvas, gridApi, config);
 const scorePopup = mountScorePopup(canvas, config);
 mountHud(canvas, config);
 mountImpact(canvas, config);
-const bulletHoles = mountBulletHoles(canvas, config);
+const bulletHoles = mountBulletHoles(canvas, gridApi, config);
+// Handy for debugging and perf checks from the browser console.
+window.effects = { config, grid: gridApi, applyEffects };
 const menu = mountPauseMenu(canvas, gridApi, config, MENU_ITEMS);
 
 const pane = new Pane({ container: document.querySelector('.panel') });

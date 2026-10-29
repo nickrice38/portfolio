@@ -1,3 +1,5 @@
+import { setStyle } from './dom.js';
+
 // An endless, pannable grid of cards. Only the cards in view exist in the DOM;
 // they are pooled and repositioned as the grid moves.
 // Reads `config` every frame, so live edits from the playground apply immediately.
@@ -6,7 +8,11 @@
 // The grid fires a `shoot` event on `el` when the target is clicked.
 export function mountInfiniteGrid(el, config) {
   el.classList.add('infinite-grid');
-  const pool = [];
+  // Card elements stay with their cell while it's on screen, so a card's
+  // project (and its bullet holes) only change when it's recycled.
+  const cells = new Map(); // "col,row" -> card element
+  const spare = [];
+  let visible = []; // cards on screen this frame
   const offset = { x: 0, y: 0 };
   const velocity = { x: 0, y: 0 };
   const lifts = new Map(); // "col,row" -> 0..1, eased per frame
@@ -352,7 +358,7 @@ export function mountInfiniteGrid(el, config) {
     const row0 = Math.floor((H / 2 - spanY - offset.y) / pitchY) - 1;
     const row1 = Math.ceil((H / 2 + spanY - offset.y) / pitchY);
 
-    let i = 0;
+    const seen = new Set();
     for (let row = row0; row <= row1; row++) {
       // Every other row shifts sideways by rowOffset of a cell, brick-style.
       const shift = shiftOf(row);
@@ -367,30 +373,48 @@ export function mountInfiniteGrid(el, config) {
         const py = warpY ? warpY.at(dy * k) : { pos: dy * k, z: 0, angle: 0 };
         if (px.hidden || py.hidden || shown <= 0) continue;
 
-        const card = pool[i] ?? el.appendChild(Object.assign(document.createElement('div'), { className: 'infinite-grid__card' }));
-        pool[i++] = card;
         const cellKey = `${col},${row}`;
+        seen.add(cellKey);
+        let card = cells.get(cellKey);
+        if (!card) {
+          card = spare.pop() ?? el.appendChild(Object.assign(document.createElement('div'), { className: 'infinite-grid__card' }));
+          cells.set(cellKey, card);
+          card.project = projectAt(col, row, grid.projectCount);
+          card.hidden = false;
+        }
         const lift = lifts.get(cellKey) ?? 0;
         const scale = (1 + lift * (aim.liftScale - 1)) * (0.6 + 0.4 * shown) * k;
         // One tilt about a combined axis, so corners don't twist like they
         // would with separate rotateX/rotateY.
         const tilt = Math.hypot(px.angle, py.angle);
-        card.style.width = `${w}px`;
-        card.style.height = `${h}px`;
-        card.style.transform =
+        card.w = w;
+        card.h = h;
+        setStyle(card, 'width', `${w}px`);
+        setStyle(card, 'height', `${h}px`);
+        setStyle(
+          card,
+          'transform',
           `translate3d(${W / 2 + px.pos - w / 2}px, ${H / 2 + py.pos - h / 2}px, ${px.z + py.z}px) ` +
-          (tilt ? `rotate3d(${py.angle}, ${-px.angle}, 0, ${tilt}rad) ` : '') +
-          `scale(${scale})`;
-        card.style.setProperty('--lift', lift);
-        card.style.opacity = shown;
-        card.classList.toggle('is-target', cellKey === target?.key);
-        const project = String(projectAt(col, row, grid.projectCount));
-        if (card.dataset.project !== project) card.dataset.project = project;
-        if (cellKey === target?.key) target.element = card;
-        card.hidden = false;
+            (tilt ? `rotate3d(${py.angle}, ${-px.angle}, 0, ${tilt}rad) ` : '') +
+            `scale(${scale})`,
+        );
+        setStyle(card, 'opacity', String(shown));
+        // Shadow only while lifting, so idle cards don't carry one.
+        setStyle(card, '--lift', lift > 0.001 ? String(lift) : '0');
+        if (card.lifted !== lift > 0.001) card.classList.toggle('is-lifted', (card.lifted = lift > 0.001));
+        const isTarget = cellKey === target?.key;
+        if (card.targeted !== isTarget) card.classList.toggle('is-target', (card.targeted = isTarget));
+        if (isTarget) target.element = card;
       }
     }
-    for (; i < pool.length; i++) pool[i].hidden = true;
+    // Recycle cards whose cell has left the screen.
+    for (const [cellKey, card] of cells) {
+      if (seen.has(cellKey)) continue;
+      cells.delete(cellKey);
+      card.hidden = true;
+      spare.push(card);
+    }
+    visible = [...cells.values()];
 
     requestAnimationFrame(tick);
   };
@@ -409,6 +433,10 @@ export function mountInfiniteGrid(el, config) {
     },
     get holeRect() {
       return holeRect;
+    },
+    // Card elements currently on screen; each has `.project`, `.w` and `.h`.
+    get cards() {
+      return visible;
     },
     pause: (value) => {
       paused = value;

@@ -2,7 +2,7 @@
 // card, through every copy of that project, as a "you've seen this" marker.
 // The hole is cut with a CSS mask, so it's truly see-through (images on the
 // cards will look shot through); a darker torn rim with cracks sits around it.
-export function mountBulletHoles(gridEl, config) {
+export function mountBulletHoles(gridEl, grid, config) {
   const holes = new Map(); // project -> [{ u, v, hole, rim, born }]
   let version = 0;
 
@@ -13,9 +13,32 @@ export function mountBulletHoles(gridEl, config) {
     const shape = jagged();
     list.push({ u: detail.hitU, v: detail.hitV, hole: svgUrl(shape.hole), rim: svgUrl(shape.rim), born: performance.now() });
     while (list.length > h.max) list.shift();
+    list.key = `${detail.project}:${version + 1}`;
     holes.set(detail.project, list);
     version++;
   });
+
+  // Mask and rim styles per project and card size, built once and shared by
+  // every copy of that project.
+  const styles = new Map();
+  const styleFor = (list, w, h, size, rimSize) => {
+    const key = `${list.key}|${list.length}|${w}|${h}|${size}|${rimSize}`;
+    let st = styles.get(key);
+    if (st) return st;
+    const at = (hole, s) => `${hole.u * w - s / 2}px ${hole.v * h - s / 2}px`;
+    const positions = ['0 0', ...list.map((hole) => at(hole, size))].join(', ');
+    const sizes = ['100% 100%', ...list.map(() => `${size}px ${size}px`)].join(', ');
+    // A solid layer with each hole shape excluded from it.
+    const images = ['linear-gradient(#000, #000)', ...list.map((hole) => hole.hole)].join(', ');
+    st = {
+      maskImage: images,
+      maskPosition: positions,
+      maskSize: sizes,
+      rim: list.map((hole) => `${hole.rim} ${at(hole, rimSize)} / ${rimSize}px ${rimSize}px no-repeat`).join(', '),
+    };
+    styles.set(key, st);
+    return st;
+  };
 
   // Each frame, (re)apply holes to any card whose project, size or holes changed.
   const sync = () => {
@@ -25,44 +48,40 @@ export function mountBulletHoles(gridEl, config) {
       for (const [project, list] of holes) {
         const kept = list.filter((hole) => now - hole.born < h.life);
         if (kept.length !== list.length) {
+          kept.key = list.key;
           kept.length ? holes.set(project, kept) : holes.delete(project);
           version++;
         }
       }
     }
+    if (styles.size > 200) styles.clear();
     const size = h.size * config.grid.zoom;
     const rimSize = size * (1 + h.rim);
-    for (const card of gridEl.querySelectorAll('.infinite-grid__card')) {
-      const list = (h.enabled && holes.get(Number(card.dataset.project))) || [];
-      const w = parseFloat(card.style.width);
-      const ht = parseFloat(card.style.height);
-      const sig = `${version}|${card.dataset.project}|${w}|${ht}|${size}|${rimSize}`;
-      if (card._holes === sig) continue;
-      card._holes = sig;
-      if (!list.length) {
+    for (const card of grid.cards) {
+      const list = h.enabled ? holes.get(card.project) : undefined;
+      const sig = list ? `${version}|${card.project}|${card.w}|${card.h}|${size}|${rimSize}` : '';
+      if (card.holes === sig) continue;
+      card.holes = sig;
+      card.classList.toggle('has-holes', !!list);
+      if (!list) {
         card.style.maskImage = card.style.webkitMaskImage = '';
         card.style.removeProperty('--holes-rim');
         continue;
       }
-      const at = (hole, s) => `${hole.u * w - s / 2}px ${hole.v * ht - s / 2}px`;
-      // A solid layer with each hole shape excluded from it.
-      const images = ['linear-gradient(#000, #000)', ...list.map((hole) => hole.hole)].join(', ');
+      const st = styleFor(list, card.w, card.h, size, rimSize);
       Object.assign(card.style, {
-        maskImage: images,
-        webkitMaskImage: images,
-        maskPosition: ['0 0', ...list.map((hole) => at(hole, size))].join(', '),
-        webkitMaskPosition: ['0 0', ...list.map((hole) => at(hole, size))].join(', '),
-        maskSize: ['100% 100%', ...list.map(() => `${size}px ${size}px`)].join(', '),
-        webkitMaskSize: ['100% 100%', ...list.map(() => `${size}px ${size}px`)].join(', '),
+        maskImage: st.maskImage,
+        webkitMaskImage: st.maskImage,
+        maskPosition: st.maskPosition,
+        webkitMaskPosition: st.maskPosition,
+        maskSize: st.maskSize,
+        webkitMaskSize: st.maskSize,
         maskRepeat: 'no-repeat',
         webkitMaskRepeat: 'no-repeat',
         maskComposite: 'exclude',
         webkitMaskComposite: 'xor',
       });
-      card.style.setProperty(
-        '--holes-rim',
-        list.map((hole) => `${hole.rim} ${at(hole, rimSize)} / ${rimSize}px ${rimSize}px no-repeat`).join(', '),
-      );
+      card.style.setProperty('--holes-rim', st.rim);
     }
     requestAnimationFrame(sync);
   };
