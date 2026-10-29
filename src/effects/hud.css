@@ -108,35 +108,48 @@
 
 /* Progressive blur patches behind the HUD. Each layer blurs a little more
    and is masked to a later band, so the blur fades in towards the edge;
-   --hmask fades it out sideways too. */
+   --hmask fades it out sideways too.
+   The container must stay plain: a mask, filter or opacity < 1 on it would cut
+   the layers' backdrop-filter off from the page, so they'd blur nothing. Both
+   masks therefore live on each layer, and the tint is its own layer. */
 .edge-blur {
   position: fixed;
   z-index: 11; /* above the grid and crosshair, below the HUD text */
   pointer-events: none;
-  mask-image: var(--hmask);
-  -webkit-mask-image: var(--hmask);
-  transition: opacity 200ms ease-out;
 }
 
 .is-menu-open .edge-blur {
-  opacity: 0;
+  visibility: hidden;
 }
 
 .edge-blur--top {
   --dir: to top;
-  background: linear-gradient(to bottom, color-mix(in srgb, var(--colour-background) calc(var(--hud-blur-tint) * 100%), transparent), transparent);
+  --tint-dir: to bottom;
 }
 
 .edge-blur--bottom {
   --dir: to bottom;
-  background: linear-gradient(to top, color-mix(in srgb, var(--colour-background) calc(var(--hud-blur-tint) * 100%), transparent), transparent);
+  --tint-dir: to top;
+}
+
+.edge-blur > div,
+.edge-blur::after {
+  position: absolute;
+  inset: 0;
+  -webkit-mask-composite: source-in;
+  mask-composite: intersect;
 }
 
 .edge-blur > div {
-  position: absolute;
-  inset: 0;
   backdrop-filter: blur(calc(var(--hud-blur-strength) * var(--f) * 1px));
   -webkit-backdrop-filter: blur(calc(var(--hud-blur-strength) * var(--f) * 1px));
-  mask-image: var(--mask);
-  -webkit-mask-image: var(--mask);
+  mask-image: var(--mask), var(--hmask);
+  -webkit-mask-image: var(--mask), var(--hmask);
+}
+
+.edge-blur::after {
+  content: "";
+  background: linear-gradient(var(--tint-dir), color-mix(in srgb, var(--colour-background) calc(var(--hud-blur-tint) * 100%), transparent), transparent);
+  mask-image: var(--hmask);
+  -webkit-mask-image: var(--hmask);
 }

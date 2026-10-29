@@ -130,24 +130,25 @@ export function mountHud(gridEl, config) {
   sync();
 }
 
-// Apple-style progressive blur from one edge: stacked backdrop blurs, each
-// stronger than the last and masked to a slightly later band, so the blur
-// ramps up smoothly towards the edge with no visible line.
-const BLUR_LAYERS = 6;
+// Apple-style progressive blur: stacked backdrop blurs, each stronger than the
+// last and masked to a slightly later band, so the blur ramps up smoothly from
+// the patch's inner edge to full strength behind the element, with no visible line.
+const BLUR_LAYERS = 8;
 function progressiveBlur(side) {
   const strip = document.createElement('div');
   strip.className = `edge-blur edge-blur--${side}`;
   for (let i = 0; i < BLUR_LAYERS; i++) {
     const layer = document.createElement('div');
-    const step = 100 / (BLUR_LAYERS + 1);
-    const stops = [i * step, (i + 1) * step, (i + 2) * step, (i + 3) * step].map((n) => `${Math.min(100, n)}%`);
-    // Doubling blur per layer, relative to the strongest at the very edge.
+    // The ramp from sharp to blurred happens within `blurReach` of the patch's
+    // inner edge; past that, behind the HUD element, the strongest layer is solid.
+    const at = (n) => `calc(var(--hud-blur-reach) * ${Math.min(1, n / (BLUR_LAYERS + 1)).toFixed(3)} * 1px)`;
+    // Doubling blur per layer, relative to the strongest.
     layer.style.setProperty('--f', 2 ** (i - (BLUR_LAYERS - 1)));
     layer.style.setProperty(
       '--mask',
       i === BLUR_LAYERS - 1
-        ? `linear-gradient(var(--dir), transparent ${stops[0]}, #000 ${stops[1]})`
-        : `linear-gradient(var(--dir), transparent ${stops[0]}, #000 ${stops[1]}, #000 ${stops[2]}, transparent ${stops[3]})`,
+        ? `linear-gradient(var(--dir), transparent ${at(i)}, #000 ${at(i + 1)})`
+        : `linear-gradient(var(--dir), transparent ${at(i)}, #000 ${at(i + 1)}, #000 ${at(i + 2)}, transparent ${at(i + 3)})`,
     );
     strip.append(layer);
   }
