@@ -72,8 +72,10 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* Streak medal banner, top centre. */
+/* Streak medal banner, top centre. Above the project view (and the score
+   pop-up) so it lands even when the shot that earned it opens a project. */
 .hud-medal {
+  z-index: 31;
   display: flex;
   flex-direction: column;
   align-items: center;
