@@ -31,6 +31,15 @@
     "driftX": 0,
     "driftY": 0
   },
+  "lanes": {
+    "enabled": true,
+    "speed": 18,
+    "pattern": "alternate",
+    "variation": 0.3,
+    "stopOnTarget": true,
+    "stopEase": 0.06,
+    "realign": true
+  },
   "warp": {
     "amount": 0,
     "axis": "horizontal",

@@ -14,6 +14,19 @@ export function mountInfiniteGrid(el, config) {
   let lastInput = 0;
   let target = null;
   let nearest = { col: 0, row: 0 }; // card nearest the crosshair, updated each frame
+
+  // Lanes: rows slide sideways on their own, shooting-gallery style. Positions are
+  // in cards (1 = one card + gap). Every lane follows a shared clock `t`; `hold`
+  // eases a lane towards a stop (1 moving, 0 stopped) and `nudge` stores how far
+  // a lane has fallen behind (or been realigned) relative to that clock.
+  const lanes = { t: 0, speed: 0, hold: new Map(), nudge: new Map(), last: performance.now() };
+  const laneRate = (row) => {
+    const { pattern, variation } = config.lanes;
+    const dir = pattern === 'same' ? 1 : pattern === 'pairs' ? (Math.floor(row / 2) & 1 ? -1 : 1) : row & 1 ? -1 : 1;
+    const wobble = Math.sin(row * 12.9898) * 43758.5453 % 1; // stable -1..1 per row
+    return dir * (1 + variation * wobble);
+  };
+  const laneAt = (row) => laneRate(row) * lanes.t + (lanes.nudge.get(row) ?? 0);
   let paused = false;
   // The hole: the card nearest the crosshair and its neighbours (an odd
   // square, e.g. 3x3) fade out to make room for the menu. Nothing moves.
@@ -218,7 +231,8 @@ export function mountInfiniteGrid(el, config) {
     const pitchY = h + grid.gapY * grid.zoom;
     const W = el.clientWidth;
     const H = el.clientHeight;
-    const shiftOf = (row) => (row & 1) * grid.rowOffset * pitchX;
+    const brickOf = (row) => (row & 1) * grid.rowOffset * pitchX;
+    const shiftOf = (row) => brickOf(row) + laneAt(row) * pitchX;
 
     const { size, transition, stagger } = config.home;
     const ease = (t) => 1 - (1 - Math.min(1, Math.max(0, t))) ** 3;
@@ -230,17 +244,49 @@ export function mountInfiniteGrid(el, config) {
     }
     hole.open = hole.from + (hole.to - hole.from) * ease((performance.now() - hole.start) / transition);
     const holeActive = hole.open > 0.001;
+
+    // Lanes: advance the shared clock, easing to a stop while paused, in the menu
+    // or zoomed in, and holding the targeted card's lane still.
+    {
+      const L = config.lanes;
+      const now = performance.now();
+      const dt = Math.min(0.05, (now - lanes.last) / 1000);
+      lanes.last = now;
+      const moving = L.enabled && !paused && !holeActive && !reduced.matches && ads.k < 1.02;
+      lanes.speed += ((moving ? 1 : 0) - lanes.speed) * L.stopEase;
+      const step = (L.speed * dt * lanes.speed) / pitchX;
+      lanes.t += step;
+      if (target && L.stopOnTarget) lanes.hold.set(target.row, lanes.hold.get(target.row) ?? 1);
+      for (const [row, f] of lanes.hold) {
+        const next = f + ((row === target?.row && L.stopOnTarget ? 0 : 1) - f) * L.stopEase;
+        // A held lane gives back the clock's movement so it stays put.
+        lanes.nudge.set(row, (lanes.nudge.get(row) ?? 0) - laneRate(row) * step * (1 - next));
+        if (next > 0.999) lanes.hold.delete(row);
+        else lanes.hold.set(row, next);
+      }
+      // Pausing: glide every visible lane to the nearest whole card, so the grid lines up again.
+      if (holeActive && L.realign) {
+        const top = Math.floor((-offset.y) / pitchY) - 2;
+        const bottom = Math.ceil((H - offset.y) / pitchY) + 2;
+        for (let row = top; row <= bottom; row++) {
+          const u = laneAt(row);
+          lanes.nudge.set(row, (lanes.nudge.get(row) ?? 0) + (Math.round(u) - u) * 0.15);
+        }
+      }
+    }
+    // Hole cells are picked by where a card sits (lanes move cards between columns).
+    const slot = (col, row) => col + Math.round(laneAt(row));
     const reach = (size - 1) / 2;
     const inHole = (col, row) =>
-      holeActive && Math.abs(col - hole.centre.col) <= reach && Math.abs(row - hole.centre.row) <= reach;
+      holeActive && Math.abs(slot(col, row) - hole.centre.col) <= reach && Math.abs(row - hole.centre.row) <= reach;
     // 0..1 visibility for a hole card. The centre leaves first and returns last.
     const presence = (col, row) => {
-      const ring = Math.max(Math.abs(col - hole.centre.col), Math.abs(row - hole.centre.row));
+      const ring = Math.max(Math.abs(slot(col, row) - hole.centre.col), Math.abs(row - hole.centre.row));
       const d = reach ? ring / reach : 1; // 0 centre .. 1 outer ring
       return Math.min(1, Math.max(0, (1 - hole.open) * (1 + stagger) - (1 - d) * stagger));
     };
     // The hole on screen: from the top-left card's corner to the bottom-right card's.
-    const holeCx = offset.x + hole.centre.col * pitchX + shiftOf(hole.centre.row) + w / 2;
+    const holeCx = offset.x + hole.centre.col * pitchX + brickOf(hole.centre.row) + w / 2;
     const holeCy = offset.y + hole.centre.row * pitchY + h / 2;
     const holeW = size * pitchX - (pitchX - w);
     const holeH = size * pitchY - (pitchY - h);
@@ -293,7 +339,8 @@ export function mountInfiniteGrid(el, config) {
     for (let row = row0; row <= row1; row++) {
       // Every other row shifts sideways by rowOffset of a cell, brick-style.
       const shift = shiftOf(row);
-      for (let col = col0; col <= col1; col++) {
+      const laneCols = Math.round(shift / pitchX); // this lane's cards have slid this many columns
+      for (let col = col0 - laneCols; col <= col1 - laneCols; col++) {
         // Card centre relative to the viewport centre, before warping.
         const dx = col * pitchX + shift + offset.x + w / 2 - W / 2;
         const dy = row * pitchY + offset.y + h / 2 - H / 2;
@@ -335,7 +382,7 @@ export function mountInfiniteGrid(el, config) {
   return {
     // Fade out the cards around the crosshair for the menu, or bring them back.
     setHole(open) {
-      if (open) hole.centre = nearest;
+      if (open) hole.centre = { col: nearest.col + Math.round(laneAt(nearest.row)), row: nearest.row };
       hole.from = hole.open;
       hole.to = open ? 1 : 0;
       hole.start = performance.now();

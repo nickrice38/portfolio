@@ -102,6 +102,13 @@ const TIPS = {
   'Feed time': 'How long each kill feed line stays before fading, in milliseconds.',
   'Streak medals': 'A banner when you\'ve seen 3, 5 and 10 different projects.',
   'Medal time': 'How long the streak banner stays on screen, in milliseconds.',
+  'Moving lanes': 'Rows slide sideways on their own while you play, like a shooting gallery.',
+  'Lane speed': 'How fast the lanes move, in pixels per second.',
+  Pattern: 'Which way each row goes. Alternate: every row switches. In pairs: two rows each way. All one way: the whole grid flows together.',
+  Variation: 'Makes some lanes a little faster than others, for a more organic feel. 0 keeps them all the same.',
+  'Stop on target': 'The lane you\'re aiming at glides to a stop so you can read and shoot the card.',
+  'Stop ease': 'How quickly lanes stop and start. Lower is gentler.',
+  'Realign on pause': 'When you open the menu, the lanes glide back into line so the gap is clean.',
   Mode: 'How you aim. Drag: click and drag the grid. Joystick: move the mouse away from the centre to steer. Mouse look: the cursor locks and the mouse turns the view, like a shooter.',
   'Dead zone': 'The calm circle in the middle. While the mouse is inside it, nothing moves.',
   'Top speed': 'How fast the grid moves with the mouse at the very edge.',
@@ -195,7 +202,7 @@ function load(values) {
 }
 
 // Card
-const { grid, home, warp, crosshair, aim, ads, shot, score, hud, control, motion, colour } = config;
+const { grid, home, warp, crosshair, aim, ads, shot, score, hud, control, motion, lanes, colour } = config;
 const card = pane.addFolder({ title: 'Card' });
 card.addBinding(grid, 'cardWidth', { label: 'Width', min: 40, max: 800, step: 1 });
 card
@@ -385,6 +392,16 @@ motionFolder.addBinding(motion, 'keySpeed', { label: 'Key speed', min: 1, max: 4
 motionFolder.addBinding(motion, 'inertia', { label: 'Inertia', min: 0, max: 0.99, step: 0.01 });
 motionFolder.addBinding(motion, 'driftX', { label: 'Drift X', min: -3, max: 3, step: 0.05 });
 motionFolder.addBinding(motion, 'driftY', { label: 'Drift Y', min: -3, max: 3, step: 0.05 });
+
+// Lanes
+const lanesFolder = pane.addFolder({ title: 'Lanes' });
+lanesFolder.addBinding(lanes, 'enabled', { label: 'Moving lanes' });
+lanesFolder.addBinding(lanes, 'speed', { label: 'Lane speed', min: 0, max: 120, step: 1 });
+lanesFolder.addBinding(lanes, 'pattern', { label: 'Pattern', options: { Alternate: 'alternate', 'In pairs': 'pairs', 'All one way': 'same' } });
+lanesFolder.addBinding(lanes, 'variation', { label: 'Variation', min: 0, max: 1, step: 0.01 });
+lanesFolder.addBinding(lanes, 'stopOnTarget', { label: 'Stop on target' });
+lanesFolder.addBinding(lanes, 'stopEase', { label: 'Stop ease', min: 0.01, max: 0.3, step: 0.01 });
+lanesFolder.addBinding(lanes, 'realign', { label: 'Realign on pause' });
 
 // Fill
 const fill = pane.addFolder({ title: 'Fill' });
