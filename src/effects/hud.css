@@ -106,13 +106,20 @@
   opacity: 0;
 }
 
-/* Progressive edge blur behind the HUD. Each layer blurs a little more and
-   is masked to a later band, so the blur fades in towards the edge. */
+/* Progressive blur patches behind the HUD. Each layer blurs a little more
+   and is masked to a later band, so the blur fades in towards the edge;
+   --hmask fades it out sideways too. */
 .edge-blur {
   position: fixed;
   z-index: 11; /* above the grid and crosshair, below the HUD text */
-  height: calc(var(--hud-blur-height) * 1px);
   pointer-events: none;
+  mask-image: var(--hmask);
+  -webkit-mask-image: var(--hmask);
+  transition: opacity 200ms ease-out;
+}
+
+.is-menu-open .edge-blur {
+  opacity: 0;
 }
 
 .edge-blur--top {

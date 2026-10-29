@@ -104,9 +104,9 @@
     "medals": true,
     "medalHold": 2600,
     "edgeBlur": true,
-    "blurHeight": 140,
-    "blurStrength": 16,
-    "blurTint": 0.4
+    "blurStrength": 8,
+    "blurTint": 0.2,
+    "blurReach": 64
   },
   "colour": {
     "background": "#f4f4f2",

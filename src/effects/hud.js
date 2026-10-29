@@ -19,9 +19,14 @@ export function mountHud(gridEl, config) {
   const medal = document.createElement('div');
   medal.className = 'hud-medal';
   medal.innerHTML = '<span class="hud-medal__eyebrow"></span><span class="hud-medal__title"></span>';
-  const edges = ['top', 'bottom'].map(progressiveBlur);
-  for (const el of [counter, feed, medal, ...edges]) el.setAttribute('aria-hidden', 'true');
-  document.body.append(...edges, counter, feed, medal);
+  // Soft blur patches behind each HUD element, anchored to its corner.
+  const patches = [
+    { side: 'top', align: 'left', of: () => counter },
+    { side: 'top', align: 'right', of: () => document.querySelector('.pause-hud') },
+    { side: 'bottom', align: 'left', of: () => feed },
+  ].map((p) => ({ ...p, el: progressiveBlur(p.side) }));
+  for (const el of [counter, feed, medal, ...patches.map((p) => p.el)]) el.setAttribute('aria-hidden', 'true');
+  document.body.append(...patches.map((p) => p.el), counter, feed, medal);
 
   const scoreEl = counter.querySelector('.hud-counter__score');
   const projectsEl = counter.querySelector('.hud-counter__projects');
@@ -96,13 +101,25 @@ export function mountHud(gridEl, config) {
     feed.style.bottom = `${innerHeight - r.bottom + 24}px`;
     medal.style.left = `${r.left + r.width / 2}px`;
     medal.style.top = `${r.top + 72}px`;
-    for (const edge of edges) {
-      edge.hidden = !config.hud.edgeBlur;
-      edge.style.left = `${r.left}px`;
-      edge.style.width = `${r.width}px`;
+    // Each patch covers its element plus `blurReach`, from the screen edge inwards,
+    // fading out vertically (progressive layers) and sideways (--hmask).
+    const reach = config.hud.blurReach;
+    for (const p of patches) {
+      const target = p.of();
+      const box = target?.getBoundingClientRect();
+      const visible = config.hud.edgeBlur && box && box.width > 0 && box.height > 0 && !target.hidden;
+      p.el.hidden = !visible;
+      if (!visible) continue;
+      const width = (p.align === 'left' ? box.right - r.left : r.right - box.left) + reach;
+      const height = (p.side === 'top' ? box.bottom - r.top : r.bottom - box.top) + reach;
+      Object.assign(p.el.style, {
+        width: `${width}px`,
+        height: `${height}px`,
+        left: p.align === 'left' ? `${r.left}px` : `${r.right - width}px`,
+        top: p.side === 'top' ? `${r.top}px` : `${r.bottom - height}px`,
+      });
+      p.el.style.setProperty('--hmask', `linear-gradient(to ${p.align === 'left' ? 'right' : 'left'}, #000 ${width - reach}px, transparent)`);
     }
-    edges[0].style.top = `${r.top}px`;
-    edges[1].style.bottom = `${innerHeight - r.bottom}px`;
     counter.hidden = !config.hud.counter;
     if (shown !== total) {
       shown = reduced.matches ? total : Math.min(total, shown + Math.max(1, Math.ceil((total - shown) * 0.15)));
@@ -113,7 +130,7 @@ export function mountHud(gridEl, config) {
   sync();
 }
 
-// Apple-style progressive blur along one edge: stacked backdrop blurs, each
+// Apple-style progressive blur from one edge: stacked backdrop blurs, each
 // stronger than the last and masked to a slightly later band, so the blur
 // ramps up smoothly towards the edge with no visible line.
 const BLUR_LAYERS = 6;
