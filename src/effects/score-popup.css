@@ -23,7 +23,11 @@
   font-variant-numeric: tabular-nums;
 }
 
-.score-popup__label {
+.score-popup__labels {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
   font-size: calc(var(--score-size) * 0.28px);
   font-weight: 700;
   letter-spacing: 0.14em;
@@ -33,3 +37,8 @@
 .score-popup[data-font="michroma"] { font-family: "Michroma", sans-serif; }
 .score-popup[data-font="orbitron"] { font-family: "Orbitron", sans-serif; }
 .score-popup[data-font="inter"] { font-family: "Inter", system-ui, sans-serif; }
+
+/* Bonus lines (everything above the last) in white, so they read as extra. */
+.score-popup__labels span:not(:last-child) {
+  color: #fff;
+}

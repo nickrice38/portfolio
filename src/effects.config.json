@@ -72,6 +72,10 @@
     "headshotPoints": 500,
     "hitPoints": 100,
     "headshotRadius": 0.35,
+    "newProject": true,
+    "newProjectPoints": 1000,
+    "firstBlood": true,
+    "firstBloodPoints": 250,
     "showLabel": true,
     "stack": true,
     "stackWindow": 1500

@@ -86,7 +86,11 @@ const TIPS = {
   'Headshot pts': 'Points for a shot near the middle of a card.',
   'Hit pts': 'Points for a shot nearer the edge of a card.',
   'Headshot zone': 'How close to the middle counts as a headshot. 0.35 is the middle third or so; 1 makes every shot a headshot.',
-  'Show label': 'Show HEADSHOT or HIT under the points.',
+  'New project': 'Bonus the first time each project is opened this visit.',
+  'New project pts': 'Points for opening a project you haven\'t seen yet.',
+  'First blood': 'Bonus for the very first project opened in a visit.',
+  'First blood pts': 'Points for that first project.',
+  'Show label': 'Show what you earned (HEADSHOT, NEW PROJECT…) under the points.',
   Stack: 'Quick shots in a row add up into one rising total, like a multi-kill.',
   'Stack window': 'How soon the next shot has to land to keep stacking, in milliseconds.',
   Mode: 'How you aim. Drag: click and drag the grid. Joystick: move the mouse away from the centre to steer. Mouse look: the cursor locks and the mouse turns the view, like a shooter.',
@@ -132,7 +136,7 @@ const canvas = document.querySelector('.canvas');
 const gridApi = mountInfiniteGrid(canvas, config);
 mountCrosshair(canvas, gridApi, config);
 mountShot(canvas, gridApi, config);
-mountScorePopup(canvas, config);
+const scorePopup = mountScorePopup(canvas, config);
 const menu = mountPauseMenu(canvas, gridApi, config, MENU_ITEMS);
 
 const pane = new Pane({ container: document.querySelector('.panel') });
@@ -304,6 +308,10 @@ scoreFolder.addBinding(score, 'rise', { label: 'Rise', min: 0, max: 150, step: 1
 scoreFolder.addBinding(score, 'headshotPoints', { label: 'Headshot pts', min: 0, max: 2000, step: 50 });
 scoreFolder.addBinding(score, 'hitPoints', { label: 'Hit pts', min: 0, max: 2000, step: 50 });
 scoreFolder.addBinding(score, 'headshotRadius', { label: 'Headshot zone', min: 0, max: 1, step: 0.01 });
+scoreFolder.addBinding(score, 'newProject', { label: 'New project' });
+scoreFolder.addBinding(score, 'newProjectPoints', { label: 'New project pts', min: 0, max: 5000, step: 50 });
+scoreFolder.addBinding(score, 'firstBlood', { label: 'First blood' });
+scoreFolder.addBinding(score, 'firstBloodPoints', { label: 'First blood pts', min: 0, max: 5000, step: 50 });
 scoreFolder.addBinding(score, 'showLabel', { label: 'Show label' });
 scoreFolder.addBinding(score, 'stack', { label: 'Stack' });
 scoreFolder.addBinding(score, 'stackWindow', { label: 'Stack window', min: 200, max: 5000, step: 50 });
@@ -313,6 +321,10 @@ scoreFolder.addButton({ title: 'Preview headshot' }).on('click', () =>
 scoreFolder.addButton({ title: 'Preview hit' }).on('click', () =>
   canvas.dispatchEvent(new CustomEvent('shoot', { detail: { precision: 1, preview: true } })),
 );
+scoreFolder.addButton({ title: 'Preview first shot of a visit' }).on('click', () =>
+  canvas.dispatchEvent(new CustomEvent('shoot', { detail: { precision: 0, preview: true, firstBlood: true, newProject: true } })),
+);
+scoreFolder.addButton({ title: 'Reset visit' }).on('click', () => scorePopup.resetVisit());
 
 // Control
 const controlFolder = pane.addFolder({ title: 'Control' });

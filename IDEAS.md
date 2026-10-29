@@ -7,8 +7,8 @@ Tick them off as they land.
 - [x] Score pop-up: bold yellow "+500" above the crosshair on a shot
 - [x] Labels: "+500 HEADSHOT" for a dead-centre shot, "+100 HIT" for an edge shot
 - [x] Stacking: rapid shots merge into one rising total
-- [ ] "+1000 NEW PROJECT" the first time a project is opened
-- [ ] "FIRST BLOOD +250" on the first project of a visit
+- [x] "+1000 NEW PROJECT" the first time a project is opened
+- [x] "FIRST BLOOD +250" on the first project of a visit
 - [ ] Streak medals after 3 / 5 / 10 projects ("3 PROJECT STREAK", "RECRUITER'S DELIGHT")
 - [ ] Collectibles: points for visiting About, Contact etc.; "100% COMPLETE" when all found
 - [ ] Double XP: a random timed bonus, just for fun
